@@ -12,9 +12,10 @@ namespace Ristlbat17.Disposition.Reporting.Reports
     public class BataillonOverviewReporter : DispositionListReporter
     {
         private const string WorksheetTitle = "Dispoliste Ristl Bat 17";
+        private const string CumulatedSheetDescription = "Bat";
 
         private int _startRow = 1;
-        private int _startColumn = 4;
+        private readonly int _startColumn = 4;
 
         private List<string> _companyNames;
         private List<string> _gradeDescriptions;
@@ -35,67 +36,82 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             _materialReportItems = inventoryReport.MaterialReportItems;
             _servantReportItems = inventoryReport.ServantReportItems;
 
-            // Get company names out of report items
+            /*
+             * 1. Get data out of report items 
+            */
+
+            // 1.1 Get company names out of report items
             _companyNames = new List<string>();
             _servantReportItems.ForEach(servantReportItem => servantReportItem.PerCompany.ForEach(perCompany => _companyNames.Add(perCompany.Company)));
             _materialReportItems.ForEach(materialReportItem => materialReportItem.PerCompany.ForEach(perCompany => _companyNames.Add(perCompany.Company)));
-            _companyNames.Add("Bat");
+            _companyNames.Add(CumulatedSheetDescription);
             _companyNames = SortCompanyNames(_companyNames.Distinct().ToList());
 
-            // Get grades out of report items
+            // 1.2 Get grades out of report items
             _gradeDescriptions = SortGradeList(_servantReportItems.Select(servantReportItem => servantReportItem.Grade).ToArray());
 
-            // Get material list out of report items
+            // 1.3 Get material list out of report items
             _materials = SortMaterialList(_materialReportItems.Select(materialReportItem => materialReportItem.Material).ToList());
 
-            // 1. Create excel worksheet
-            var worksheet = GenerateWorksheet(package);
+            /*
+             * 2. Create one worksheet per company and a cumulated worksheet
+            */
 
-            // 2. Overall title row
-            InsertWorksheetTitle(worksheet, WorksheetTitle, 1, 18);
+            var worksheets = GenerateWorkSheets(package);
 
-            // 3. Insert all companies
-            InsertCompanyHeaders(worksheet, 1);
+            /*
+             * 3. Fill cumulated worksheet
+             */
 
-            // 4. Subtitle row
-            InsertWorksheetTitle(worksheet, "Personal", 0, 14);
+            var cumulatedWorksheet = worksheets.Where(worksheet => string.Equals(worksheet.Name, CumulatedSheetDescription)).First();
 
-            // 5. Insert Grade list and according columns
+            // 2.2 Overall title row
+            InsertWorksheetTitle(cumulatedWorksheet, WorksheetTitle, 1, 18);
+
+            // 2.3 Insert all companies
+            InsertCompanyHeaders(cumulatedWorksheet, 1);
+
+            // 2.4 Subtitle row
+            InsertWorksheetTitle(cumulatedWorksheet, "Personal", 0, 14);
+
+            // 2.5 Insert Grade list and according columns
             var startServantList = _startRow;
-            InsertServantSectionColumns(worksheet);
-            InsertServantSectionRows(worksheet);
+            InsertServantSectionColumns(cumulatedWorksheet);
+            InsertServantSectionRows(cumulatedWorksheet);
 
-            // 6. Subtitle row
-            InsertWorksheetTitle(worksheet, "Material", 0, 14);
+            // 2.6 Subtitle row
+            InsertWorksheetTitle(cumulatedWorksheet, "Material", 0, 14);
 
-            // 7. Insert material list and according columns
+            // 2.7 Insert material list and according columns
             var startMaterialList = _startRow;
-            InsertMaterialSectionColumns(worksheet, _startColumn + 1);
-            InsertMaterialSectionRows(worksheet);
+            InsertMaterialSectionColumns(cumulatedWorksheet, _startColumn + 1);
+            InsertMaterialSectionRows(cumulatedWorksheet);
 
-            // 8. Insert servant inventory data
-            InsertServantInventoryData(worksheet, startServantList);
+            // 2.8 Insert servant inventory data
+            InsertServantInventoryData(cumulatedWorksheet, startServantList);
 
-            // 9. Insert material inventory data
-            InsertMaterialInventoryData(worksheet, startMaterialList, _startColumn + 1);
+            // 2.9 Insert material inventory data
+            InsertMaterialInventoryData(cumulatedWorksheet, startMaterialList, _startColumn + 1);
 
-            // 10 Set column widhts
-            SetColumnWidths(worksheet);
+            // 2.10 Set column widhts
+            SetColumnWidths(cumulatedWorksheet);
 
-            // 6. Insert headers and footers
-            InsertHeaderFooter(worksheet, WorksheetTitle);
+            // 2.11 Insert headers and footers
+            InsertHeaderFooter(cumulatedWorksheet, WorksheetTitle);
 
-            // 7. Printer settings
-            ApplyPrinterSettings(worksheet, eOrientation.Portrait, 1, 1);
+            // 2.12 Printer settings
+            ApplyPrinterSettings(cumulatedWorksheet, eOrientation.Portrait, 1, 1);
 
             return inventoryReport.ReportDate;
         }
 
-        private ExcelWorksheet GenerateWorksheet(ExcelPackage package)
+        private ExcelWorksheets GenerateWorkSheets(ExcelPackage package)
         {
-            var worksheet = package.Workbook.Worksheets.Add("Dispoliste");
-            worksheet.Cells.Style.Font.Size = 10;
-            return worksheet;
+            var worksheets = package.Workbook.Worksheets;
+            worksheets.Add(CumulatedSheetDescription); // Cumulated worksheet comes first
+            _companyNames.Where(companyName => !string.Equals(companyName, CumulatedSheetDescription)).ToList().ForEach(companyName => worksheets.Add(companyName));
+            worksheets.ToList().ForEach(worksheet => worksheet.Cells.Style.Font.Size = 10);
+            return worksheets;
         }
 
         private void InsertWorksheetTitle(ExcelWorksheet worksheet, string worksheetTitle, int spaceAfter, int fontSize)
