@@ -1,0 +1,28 @@
+<h1>Kompaniebestände einlesen</h1>
+<loading *ngIf="!companies"></loading>
+<div class="thumbnail" style="margin-top:50px;" *ngIf="companies">
+  <div class="caption">
+    <form #changeForm (ngSubmit)="clickSubmit()">
+      <div class="form-group">
+        <label for="selectedCompany">Kompanie</label>
+        <ng-select name="selectedCompany" [items]="companies" [addTag]="false" bindLabel="name" [(ngModel)]="selectedCompany"
+          required="required" placeholder="Kompanie auswählen ...">
+        </ng-select>
+      </div>
+      <div class="form-group" *ngIf="selectedCompany">
+        <input #file type="file" multiple (change)="upload(file.files)" />
+        <br />
+        <span style="font-weight:bold" *ngIf="progress > 0 && progress < 100">
+          {{progress}}%
+        </span>
+
+        <span style="font-weight:bold" *ngIf="message">
+          {{message}}
+        </span>
+      </div>
+      <div class="form-group" *ngIf="errorMessage" style="color:red">
+        {{errorMessage}}
+      </div>
+    </form>
+  </div>
+</div>

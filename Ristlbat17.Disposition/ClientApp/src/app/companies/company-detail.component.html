@@ -1,0 +1,27 @@
+<h1>{{message}}</h1>
+
+<form #companyform (ngSubmit)="submit()">
+    <div class="form-group">
+
+        <label for="companyName">Kompaniename</label>
+        <input type="text" class="form-control" [(ngModel)]="company.name" name="companyName" required="required"
+            placeholder="Kompaniename">
+    </div>
+    <div class="form-group" >
+        <label for="locationList">Standorte</label>
+        <ng-select name="locationList" [disabled]="!editMode" [items]="" [addTag]="addLocation" bindLabel="name" multiple="true" [(ngModel)]="company.locations"
+            placeholder="Hier kann man Freitext die Standorte eintragen" (remove)="locationRemoved">
+        </ng-select>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <button type="submit" [disabled]="companyform.invalid" class="btn btn-large btn-block btn-primary">Speichern</button>
+        </div>
+        <div class=col-lg-6>
+            <button type="button" class="btn btn-large btn-block btn-secondary pull-right" (click)="cancel()">Abbrechen</button>
+        </div>
+    </div>
+
+
+</form>

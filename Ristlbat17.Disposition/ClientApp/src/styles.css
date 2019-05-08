@@ -1,0 +1,14 @@
+/* You can add global styles to this file, and also import other style files */
+
+.loader{
+    color: gray;
+    font-size: 64px;
+}
+
+.centered-loader{
+    margin-top:40vh;
+}
+
+.nav-link.active {
+    color: #565a5a;
+}

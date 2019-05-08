@@ -1,0 +1,88 @@
+<h1>{{ message }}</h1>
+<loading *ngIf="!companies"></loading>
+<div class="thumbnail" style="margin-top:50px;" *ngIf="companies">
+  <div class="caption">
+    <form #changeForm (ngSubmit)="clickSubmit()">
+      <div class="form-group">
+        <label for="selectedCompany">Kompanie</label>
+        <ng-select
+          name="selectedCompany"
+          [items]="companies"
+          [addTag]="false"
+          bindLabel="name"
+          [(ngModel)]="selectedCompany"
+          required="required"
+          placeholder="Kompanie auswählen ..."
+        >
+        </ng-select>
+      </div>
+
+      <div class="form-group" *ngIf="selectedCompany?.locations">
+        <label for="selectedLocation">Standort</label>
+        <ng-select
+          name="selectedLocation"
+          [items]="selectedCompany?.locations"
+          [addTag]="false"
+          bindLabel="name"
+          [(ngModel)]="selectedLocation"
+          required="required"
+          placeholder="Standort auswählen ..."
+        >
+        </ng-select>
+      </div>
+
+      <div class="form-group" *ngIf="selectedLocation">
+        <label for="selectedMaterial">Grad</label>
+        <ng-select
+          name="selectedGrade"
+          [items]="gradeList"
+          [addTag]="false"
+          [(ngModel)]="selectedGrade"
+          required="required"
+          placeholder="Grad auswählen ..."
+          (change)="loadAllocation()"
+        >
+        </ng-select>
+      </div>
+
+      <div class="row">
+        <servant-allocation
+          [allocation]="allocation"
+          [loading]="loadingAllocation"
+        ></servant-allocation>
+      </div>
+
+      <div class="form-group" *ngIf="selectedGrade">
+        <label for="changeAmount">{{ amountMessage }}</label>
+        <input
+          type="number"
+          class="form-control"
+          [(ngModel)]="changeAmount"
+          name="changeAmount"
+          required="required"
+          (input)="onAmountChanged()"
+        />
+      </div>
+      <div class="row">
+        <div class="col-lg-6">
+          <button
+            type="submit"
+            [disabled]="!allocation"
+            class="btn btn-large btn-block btn-primary"
+          >
+            Speichern
+          </button>
+        </div>
+        <div class="col-lg-6">
+          <button
+            type="button"
+            class="btn btn-large btn-block btn-secondary pull-right"
+            (click)="cancel()"
+          >
+            Abbrechen
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

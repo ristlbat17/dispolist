@@ -1,0 +1,49 @@
+<div class="row">
+  <div class="form-group">
+    <label for="selectedCompany">Kompanie</label>
+    <ng-select name="selectedCompany" [items]="displayCompanyNames" [addTag]="false" [(ngModel)]="selectedCompany"
+      required="required" placeholder="Kompanie auswählen ..." (change)="loadInventory()">
+    </ng-select>
+  </div>
+</div>
+
+<div *ngIf="selectedCompany">
+
+  <div *ngIf="inventoryList?.length == 0">
+    <h3>Kein Inventar eingebucht ...</h3>
+  </div>
+  <div *ngIf="inventoryList" class="row">
+    <ngb-accordion *ngFor="let material of material" style="padding: 10px;">
+      <ngb-panel>
+        <ng-template ngbPanelTitle>
+          <div>
+            {{ material.shortDescription }} <i class="fas fa-angle-down"></i>
+          </div>
+        </ng-template>
+
+       
+        <ng-template ngbPanelContent>
+          <div *ngFor="let inventory of getInventoryListByMaterial(material.sapNr)">
+            <h4>{{ inventory.company }}</h4>
+
+            <div *ngFor="let allocation of inventory.distribution" style="padding: 10px;">
+              
+              <material-allocation [allocation]="allocation" [title]="allocation.location" ></material-allocation>
+            </div>
+            <hr style="margin: 10px 0"/>
+            <div
+              style="padding:10px;font-weight: bold;background-color: #f2f2f2"
+              class="row thumbnail"
+            >
+
+              <material-allocation
+                [allocation]="getSummedAllocation(inventory)"
+                [title]="'Total'"
+              ></material-allocation>
+            </div>
+          </div>
+        </ng-template>
+      </ngb-panel>
+    </ngb-accordion>
+  </div>
+</div>

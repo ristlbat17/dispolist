@@ -1,0 +1,43 @@
+<h1 *ngIf="editMode">Material editieren</h1>
+<h1 *ngIf="!editMode">Neues Material</h1>
+<loading *ngIf="!material" ></loading>
+<div class="thumbnail" style="margin-top:50px;" *ngIf="material">
+    <div class="caption">
+        <form #companyform (ngSubmit)="submitClick()">
+            <div class="form-group">
+                    <label for="sapNr">SAP-Nummer</label>
+                    <input type="text" class="form-control" [disabled]="editMode" [(ngModel)]="material.sapNr" name="sapNr" required="required"
+                        placeholder="MC15... oder 251.XXX ">
+            </div>
+
+            <div class="form-group">
+                    <label for="description">Bezeichung</label>
+                    <input type="text" class="form-control" [(ngModel)]="material.description" name="description" required="required"
+                        placeholder="Lange material Bezeichnung DURO ....">
+            </div>
+
+            <div class="form-group">
+                    <label for="shortDescription">Kurzname</label>
+                    <input type="text" class="form-control" [(ngModel)]="material.shortDescription" name="shortDescription" required="required"
+                        placeholder="DURO">
+            </div>
+
+            <div class="form-group">
+                    <label for="category">Bereich</label>
+                    <ng-select name="category" 
+                    [items]="categories" [addTag]="false" bindLabel="name" [(ngModel)]="material.category"
+                        required="required" placeholder="Bereich auswählen (Für Reportgruppierung)...">
+                    </ng-select>
+                </div>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <button type="submit" [disabled]="companyform.invalid" class="btn btn-large btn-block btn-primary">Speichern</button>
+                </div>
+                <div class=col-lg-6>
+                    <button type="button" class="btn btn-large btn-block btn-secondary pull-right" (click)="cancelClick()">Abbrechen</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

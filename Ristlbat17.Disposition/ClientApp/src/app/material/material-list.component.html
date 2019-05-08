@@ -1,0 +1,46 @@
+<loading *ngIf="!materialList"></loading>
+<h1>Materialliste</h1>
+<!-- Edit section -->
+<div class="row" *ngIf="showDetail" style="margin-bottom:50px;">
+  <material-detail (cancel)="toggleDetail()" [editMode]="editMode" [material]="current" (submit)="save()">
+  </material-detail>
+</div>
+
+<div class="row">
+  <div *ngIf="materialList" class="pull-right">
+    <a class="btn icon-btn btn-primary pull-right" (click)="newMaterial()">
+      <span class="glyphicon btn-glyphicon glyphicon-plus img-circle">
+      </span> Neues Material erfassen
+    </a>
+  </div>
+  <div class="separator-small">
+
+  </div>
+  <div>
+    <table class='table table-sm table-hover table-striped' *ngIf="materialList">
+      <thead>
+        <tr>
+          <th>SAP-Nummer</th>
+          <th>Kurzname</th>
+          <th>Bereich</th>
+          <th>Beschreibung</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let material of materialList">
+          <td>{{ material.sapNr }}</td>
+          <td>{{ material.shortDescription }}</td>
+          <td>{{ material.category }}</td>
+          <td>{{ material.description }}</td>
+          <td style="width: 100px;">
+            <div class="btn-group pull-right" >
+                <a class="btn btn-default glyphicon glyphicon-edit" [routerLink]='["/edit-material",material.id]' ></a>
+                <a class="btn btn-danger glyphicon glyphicon-trash" (click)="delete(material.id)"></a>
+              </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

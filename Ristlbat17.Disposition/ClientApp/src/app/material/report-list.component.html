@@ -1,0 +1,49 @@
+<h1>Dispoliste Material für Ristl Bat 17</h1>
+
+<div *ngIf="reports" class="pull-right">
+  <a class="btn icon-btn btn-primary pull-right" (click)="generateReport()">
+    <span class="fas fa-file-signature btn-glyphicon">
+    </span> Neue Dispoliste generieren
+  </a>
+</div>
+
+<div class="separator-small"></div>
+
+<div>
+  <loading *ngIf="!reports"></loading>
+  <table class='table' *ngIf="reports">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Datum</th>
+        <th>Uhrzeit</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let report of reports">
+        <td>
+          <div [ngSwitch]="report.type">
+            <div *ngSwitchCase="0">
+              <span class="glyphicon glyphicon-tower"></span> Bataillon
+            </div>
+            <div *ngSwitchCase="1">
+
+            </div>
+            <div *ngSwitchDefault>
+              <span class="glyphicon glyphicon-tower"></span> Bataillon
+            </div>
+          </div>
+        </td>
+        <td>{{ report.reportingDate | date: 'dd.MM.yyyy'}}</td>
+        <td>{{ report.reportingDate | date: 'HH:mm:ss' }}</td>
+        <td>
+          <div class="btn-group pull-right">
+            <a class="btn btn-info glyphicon glyphicon-download" href="{{getReportDownloadLink(report.id)}}"></a>
+            <a class="btn btn-danger glyphicon glyphicon-trash" (click)="delete(report.id)"></a>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,34 @@
+<loading *ngIf="!companies"></loading>
+<div class="row" *ngIf="companies">
+    <div class="col-lg-12" style="margin-bottom:50px;">
+        <h1>Kompanienübersicht</h1>
+        <a class="btn icon-btn btn-primary pull-right" [routerLink]='["/new-company"]'>
+            <span class="glyphicon btn-glyphicon glyphicon-plus img-circle">
+            </span> Neue Kompanie erfassen
+        </a>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6" *ngFor="let company of companies">
+        <div class="thumbnail">
+            <div class="caption">
+                <div class='col-lg-12'>
+                    <span class="glyphicon glyphicon-tower"></span>
+                    <a class="btn btn-xs btn-danger pull-right" (click)="delete(company.id)"> <span class="glyphicon glyphicon-trash"></span></a>
+                </div>
+                <div class='col-lg-12'>
+                    <h4><span>Kompanie: </span>{{company.name}}</h4>
+                </div>
+                <div class='col-lg-12'>
+                    <h5>Standorte: </h5>
+                    <p class="text-muted">{{getLocationList(company)}}</p>
+                </div>
+                <div class="buttongroup">
+                    <button type="button" class="btn btn-secondary btn-xs " (click)="edit(company.id)">Bearbeiten</button>
+                    <a class="btn btn-xs btn-info" href="{{getDownloadCompanyTemplateDefaultLocationUrl(company.name)}}">
+                        <span class="glyphicon glyphicon-download"></span>
+                        {{getDownloadText(company)}}
+                       </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
