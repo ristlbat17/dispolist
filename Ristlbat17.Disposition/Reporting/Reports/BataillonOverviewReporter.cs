@@ -79,7 +79,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             InsertWorksheetTitle(cumulatedWorksheet, "Dispoliste Ristl Bat 17", 1, 18);
 
             // 3.3 Insert all companies
-            InsertCompanyHeaders(cumulatedWorksheet, 1);
+            InsertCompanyOrLocationHeaders(cumulatedWorksheet, _companyNames, 1);
 
             // 3.4 Subtitle row
             InsertWorksheetTitle(cumulatedWorksheet, "Personal", 0, 14);
@@ -117,10 +117,17 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // 4.2 Overall title row
                 InsertWorksheetTitle(companyWorksheet, "Dispoliste Ristl " + companyWorksheet.Name, 1, 18);
 
-                // 3.3 Insert all locations
-                InsertLocationHeaders(companyWorksheet, 1);
+                // 4.3 Insert all locations
+                InsertCompanyOrLocationHeaders(companyWorksheet, _companyLocations[companyWorksheet.Name], 1);
 
-                // % HIER WEITER %
+                // 4.4 Subtitle row
+                InsertWorksheetTitle(companyWorksheet, "Personal", 0, 14);
+
+                // 4.5 Insert Grade list and according columns
+                startServantList = _startRow;
+                InsertServantSectionColumns(companyWorksheet);
+                InsertServantSectionRows(companyWorksheet);
+
             }
 
             
@@ -156,13 +163,13 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             _startRow += spaceAfter + 1;
         }
 
-        private void InsertCompanyHeaders(ExcelWorksheet worksheet, int spaceAfter)
+        private void InsertCompanyOrLocationHeaders(ExcelWorksheet worksheet, List<string> companyOrLocationNames, int spaceAfter)
         {
-            // Iterate over all companies and for each company insert its header
-            for (int i = 0, column = _startColumn; i < _companyNames.Count; i++, column += (ServantSectionColumnsTotal.Count + 1))
+            // Iterate over all companies or locations and for each company or location insert its header
+            for (int i = 0, column = _startColumn; i < companyOrLocationNames.Count; i++, column += (ServantSectionColumnsTotal.Count + 1))
             {
                 var companyCell = ColumnIndexToColumnLetter(column) + _startRow;
-                worksheet.Cells[companyCell].Value = _companyNames[i];
+                worksheet.Cells[companyCell].Value = companyOrLocationNames[i];
                 worksheet.Cells[companyCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Merge = true;
                 worksheet.Cells[companyCell].Style.Font.Bold = true;
                 worksheet.Cells[companyCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -170,25 +177,6 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 worksheet.Cells[ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                 worksheet.Cells[companyCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
                 worksheet.Cells[companyCell].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            }
-
-            _startRow += spaceAfter + 1;
-        }
-
-        private void InsertLocationHeaders(ExcelWorksheet worksheet, int spaceAfter)
-        {
-            // Iterate over all locations and for each location insert its header
-            for (int i = 0, column = _startColumn; i < _companyLocations[worksheet.Name].Count; i++, column += (ServantSectionColumnsTotal.Count + 1))
-            {
-                var locationCell = ColumnIndexToColumnLetter(column) + _startRow;
-                worksheet.Cells[locationCell].Value = _companyLocations[worksheet.Name][i];
-                worksheet.Cells[locationCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Merge = true;
-                worksheet.Cells[locationCell].Style.Font.Bold = true;
-                worksheet.Cells[locationCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                worksheet.Cells[locationCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                worksheet.Cells[ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                worksheet.Cells[locationCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                worksheet.Cells[locationCell].Style.Border.Left.Style = ExcelBorderStyle.Thin;
             }
 
             _startRow += spaceAfter + 1;
