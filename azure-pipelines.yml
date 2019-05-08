@@ -5,6 +5,8 @@
 
 trigger:
 - master
+- develop
+- feature/*
 
 pool:
   vmImage: 'ubuntu-16.04' 
