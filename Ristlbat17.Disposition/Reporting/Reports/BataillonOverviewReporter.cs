@@ -11,13 +11,13 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 {
     public class BataillonOverviewReporter : DispositionListReporter
     {
-        private const string WorksheetTitle = "Dispoliste Ristl Bat 17";
         private const string CumulatedSheetDescription = "Bat";
 
-        private int _startRow = 1;
+        private int _startRow;
         private readonly int _startColumn = 4;
 
         private List<string> _companyNames;
+        private Dictionary<string, List<string>> _companyLocations;
         private List<string> _gradeDescriptions;
         private List<ServantReportItemBataillon> _servantReportItems;
         private List<Material.Material> _materials;
@@ -44,13 +44,20 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             _companyNames = new List<string>();
             _servantReportItems.ForEach(servantReportItem => servantReportItem.PerCompany.ForEach(perCompany => _companyNames.Add(perCompany.Company)));
             _materialReportItems.ForEach(materialReportItem => materialReportItem.PerCompany.ForEach(perCompany => _companyNames.Add(perCompany.Company)));
-            _companyNames.Add(CumulatedSheetDescription);
             _companyNames = SortCompanyNames(_companyNames.Distinct().ToList());
+            _companyNames.Add(CumulatedSheetDescription);
 
-            // 1.2 Get grades out of report items
+            // 1.2 Get company locations out of report items
+            _companyLocations = new Dictionary<string, List<string>>();
+            _companyNames.Where(companyName => !string.Equals(companyName, CumulatedSheetDescription)).ToList().ForEach(companyName => _companyLocations.Add(companyName, new List<string>()));
+            _companyNames.ForEach(companyName => _servantReportItems.SelectMany(servantReportItems => servantReportItems.PerCompany.Where(perCompany => string.Equals(perCompany.Company, companyName))).SelectMany(perCompany => perCompany.PerLocation).Select(perLocation => perLocation.Location).Distinct().ToList().ForEach(locationName => _companyLocations[companyName].Add(locationName)));
+            _companyLocations.Keys.ToList().ForEach(Key => _companyLocations[Key] = SortCompanyLocations(_companyLocations[Key]));
+            _companyLocations.Keys.ToList().ForEach(Key => _companyLocations[Key].Add("Total"));
+
+            // 1.3 Get grades out of report items
             _gradeDescriptions = SortGradeList(_servantReportItems.Select(servantReportItem => servantReportItem.Grade).ToArray());
 
-            // 1.3 Get material list out of report items
+            // 1.4 Get material list out of report items
             _materials = SortMaterialList(_materialReportItems.Select(materialReportItem => materialReportItem.Material).ToList());
 
             /*
@@ -64,43 +71,67 @@ namespace Ristlbat17.Disposition.Reporting.Reports
              */
 
             var cumulatedWorksheet = worksheets.Where(worksheet => string.Equals(worksheet.Name, CumulatedSheetDescription)).First();
-            var blub = 1;
 
-            // 2.2 Overall title row
-            InsertWorksheetTitle(cumulatedWorksheet, WorksheetTitle, 1, 18);
+            // 3.1 Reinitialize start row
+            _startRow = 1;
 
-            // 2.3 Insert all companies
+            // 3.2 Overall title row
+            InsertWorksheetTitle(cumulatedWorksheet, "Dispoliste Ristl Bat 17", 1, 18);
+
+            // 3.3 Insert all companies
             InsertCompanyHeaders(cumulatedWorksheet, 1);
 
-            // 2.4 Subtitle row
+            // 3.4 Subtitle row
             InsertWorksheetTitle(cumulatedWorksheet, "Personal", 0, 14);
 
-            // 2.5 Insert Grade list and according columns
+            // 3.5 Insert Grade list and according columns
             var startServantList = _startRow;
             InsertServantSectionColumns(cumulatedWorksheet);
             InsertServantSectionRows(cumulatedWorksheet);
 
-            // 2.6 Subtitle row
+            // 3.6 Subtitle row
             InsertWorksheetTitle(cumulatedWorksheet, "Material", 0, 14);
 
-            // 2.7 Insert material list and according columns
+            // 3.7 Insert material list and according columns
             var startMaterialList = _startRow;
             InsertMaterialSectionColumns(cumulatedWorksheet, _startColumn + 1);
             InsertMaterialSectionRows(cumulatedWorksheet);
 
-            // 2.8 Insert servant inventory data
+            // 3.8 Insert servant inventory data
             InsertServantInventoryData(cumulatedWorksheet, startServantList);
 
-            // 2.9 Insert material inventory data
+            // 3.9 Insert material inventory data
             InsertMaterialInventoryData(cumulatedWorksheet, startMaterialList, _startColumn + 1);
 
-            // 2.10 Set column widhts
+            /*
+             * 4. Fill each companie's worksheet
+            */
+
+            var companyWorksheets = worksheets.Where(worksheet => !string.Equals(worksheet.Name, CumulatedSheetDescription)).ToList();
+
+            foreach (ExcelWorksheet companyWorksheet in companyWorksheets)
+            {
+                // 4.1 Reinitialize start row
+                _startRow = 1;
+
+                // 4.2 Overall title row
+                InsertWorksheetTitle(companyWorksheet, "Dispoliste Ristl " + companyWorksheet.Name, 1, 18);
+
+                // 3.3 Insert all locations
+                InsertLocationHeaders(companyWorksheet, 1);
+
+                // % HIER WEITER %
+            }
+
+            
+
+            // TBD Set column widhts
             SetColumnWidths(cumulatedWorksheet);
 
-            // 2.11 Insert headers and footers
-            InsertHeaderFooter(cumulatedWorksheet, WorksheetTitle);
+            // TBD Insert headers and footers
+            InsertHeaderFooter(cumulatedWorksheet, "Dispoliste Ristl Bat 17");
 
-            // 2.12 Printer settings
+            // TBD Printer settings
             ApplyPrinterSettings(cumulatedWorksheet, eOrientation.Portrait, 1, 1);
 
             return inventoryReport.ReportDate;
@@ -139,6 +170,25 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 worksheet.Cells[ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Right.Style = ExcelBorderStyle.Thin;
                 worksheet.Cells[companyCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
                 worksheet.Cells[companyCell].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            }
+
+            _startRow += spaceAfter + 1;
+        }
+
+        private void InsertLocationHeaders(ExcelWorksheet worksheet, int spaceAfter)
+        {
+            // Iterate over all locations and for each location insert its header
+            for (int i = 0, column = _startColumn; i < _companyLocations[worksheet.Name].Count; i++, column += (ServantSectionColumnsTotal.Count + 1))
+            {
+                var locationCell = ColumnIndexToColumnLetter(column) + _startRow;
+                worksheet.Cells[locationCell].Value = _companyLocations[worksheet.Name][i];
+                worksheet.Cells[locationCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Merge = true;
+                worksheet.Cells[locationCell].Style.Font.Bold = true;
+                worksheet.Cells[locationCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                worksheet.Cells[locationCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                worksheet.Cells[ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                worksheet.Cells[locationCell + ":" + ColumnIndexToColumnLetter(column + (ServantSectionColumnsTotal.Count - 1)) + _startRow].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                worksheet.Cells[locationCell].Style.Border.Left.Style = ExcelBorderStyle.Thin;
             }
 
             _startRow += spaceAfter + 1;

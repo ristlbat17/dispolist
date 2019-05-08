@@ -148,6 +148,12 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             return companyNames;
         }
 
+        public static List<string> SortCompanyLocations(List<string> companyLocations)
+        {
+            companyLocations.Sort(CompanyLocationComparer.Instance);
+            return companyLocations;
+        }
+
         public class GradeRankComparer : IComparer<string>
         {
             public static GradeRankComparer Instance => new GradeRankComparer(StringComparer.CurrentCulture);
@@ -161,51 +167,51 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
             public int Compare(string gradeRank1, string gradeRank2)
             {
-                if (string.Equals(gradeRank1, gradeRank2))
+                if (string.Equals(gradeRank1, gradeRank2, StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 0;
                 }
 
                 // "Of" comes first
-                if (string.Equals(gradeRank1, "Of"))
+                if (string.Equals(gradeRank1, "Of", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(gradeRank2, "Of"))
+                if (string.Equals(gradeRank2, "Of", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // "Höh Uof" comes second
-                if (string.Equals(gradeRank1, "Höh Uof"))
+                if (string.Equals(gradeRank1, "Höh Uof", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(gradeRank2, "Höh Uof"))
+                if (string.Equals(gradeRank2, "Höh Uof", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // "Uof" comes third
-                if (string.Equals(gradeRank1, "Uof"))
+                if (string.Equals(gradeRank1, "Uof", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(gradeRank2, "Uof"))
+                if (string.Equals(gradeRank2, "Uof", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // "Mannschaft" comes fourth
-                if (string.Equals(gradeRank1, "Mannschaft"))
+                if (string.Equals(gradeRank1, "Mannschaft", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(gradeRank2, "Mannschaft"))
+                if (string.Equals(gradeRank2, "Mannschaft", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
@@ -227,62 +233,62 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
             public int Compare(string materialCategory1, string materialCategory2)
             {
-                if (string.Equals(materialCategory1, materialCategory2))
+                if (string.Equals(materialCategory1, materialCategory2, StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 0;
                 }
 
                 // "Ristl" comes first
-                if (string.Equals(materialCategory1, "Ristl"))
+                if (string.Equals(materialCategory1, "Ristl", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(materialCategory2, "Ristl"))
+                if (string.Equals(materialCategory2, "Ristl", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // "Funk" comes second
-                if (string.Equals(materialCategory1, "Funk"))
+                if (string.Equals(materialCategory1, "Funk", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(materialCategory2, "Funk"))
+                if (string.Equals(materialCategory2, "Funk", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // "Geheim Mat" comes third
-                if (string.Equals(materialCategory1, "Geheim Mat"))
+                if (string.Equals(materialCategory1, "Geheim Mat", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(materialCategory2, "Geheim Mat"))
+                if (string.Equals(materialCategory2, "Geheim Mat", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // "Mat" comes fourth
-                if (string.Equals(materialCategory1, "Mat"))
+                if (string.Equals(materialCategory1, "Mat", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(materialCategory2, "Mat"))
+                if (string.Equals(materialCategory2, "Mat", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // "Fz" comes fifth
-                if (string.Equals(materialCategory1, "Fz"))
+                if (string.Equals(materialCategory1, "Fz", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(materialCategory2, "Fz"))
+                if (string.Equals(materialCategory2, "Fz", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
@@ -295,65 +301,98 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         {
             public static CompanyNameComparer Instance => new CompanyNameComparer(StringComparer.CurrentCulture);
 
-            private readonly IComparer<string> _companyComparer;
+            private readonly IComparer<string> _companyNameComparer;
 
-            public CompanyNameComparer(IComparer<string> companyComparer)
+            public CompanyNameComparer(IComparer<string> companyNameComparer)
             {
-                _companyComparer = companyComparer;
+                _companyNameComparer = companyNameComparer;
             }
 
             public int Compare(string companyName1, string companyName2)
             {
-                if (string.Equals(companyName1, companyName2))
+                if (string.Equals(companyName1, companyName2, StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 0;
                 }
 
                 // "Stab" comes before everything else
-                if (string.Equals(companyName1, "Stab"))
+                if (string.Equals(companyName1, "Stab", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(companyName2, "Stab"))
+                if (string.Equals(companyName2, "Stab", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // Followed by "Stabskp"
-                if (string.Equals(companyName1, "Stabskp"))
+                if (string.Equals(companyName1, "Stabskp", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(companyName2, "Stabskp"))
+                if (string.Equals(companyName2, "Stabskp", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
                 // .. or "Stabs Kp"
-                if (string.Equals(companyName1, "Stabs Kp"))
+                if (string.Equals(companyName1, "Stabs Kp", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                if (string.Equals(companyName2, "Stabs Kp"))
+                if (string.Equals(companyName2, "Stabs Kp", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return 1;
                 }
 
-                // "Bat" is last
-                if (string.Equals(companyName1, "Bat"))
+                return _companyNameComparer.Compare(companyName1, companyName2);
+            }
+        }
+
+        public class CompanyLocationComparer : IComparer<string>
+        {
+            public static CompanyLocationComparer Instance => new CompanyLocationComparer(StringComparer.CurrentCulture);
+
+            private readonly IComparer<string> _companyLocationComparer;
+
+            public CompanyLocationComparer(IComparer<string> companyLocationComparer)
+            {
+                _companyLocationComparer = companyLocationComparer;
+            }
+
+            public int Compare(string companyLocation1, string companyLocation2)
+            {
+                if (string.Equals(companyLocation1, companyLocation2, StringComparison.CurrentCultureIgnoreCase))
                 {
-                    return 1;
+                    return 0;
                 }
 
-                if (string.Equals(companyName2, "Bat"))
+                // "KP Rw" comes before everything else
+                if (string.Equals(companyLocation1, "KP Rw", StringComparison.CurrentCultureIgnoreCase))
                 {
                     return -1;
                 }
 
-                return _companyComparer.Compare(companyName1, companyName2);
+                if (string.Equals(companyLocation2, "KP Rw", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return 1;
+                }
+
+                // Followed by "KP Front"
+                if (string.Equals(companyLocation1, "KP Front", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return -1;
+                }
+
+                if (string.Equals(companyLocation2, "KP Front", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return 1;
+                }
+
+                return _companyLocationComparer.Compare(companyLocation1, companyLocation2);
             }
         }
     }
