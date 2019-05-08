@@ -1,0 +1,15 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-16.04' 
+
+variables:
+  dockerId: ristl17  
+  imageName: 'dispolist:$(build.buildNumber)'
+
+steps:
+- script: |
+    docker build -t $(dockerId)/$(imageName) Ristlbat17.Disposition/
+    docker login -u $(dockerId) -p $(dockerPassword) 
+    docker push $(dockerId)/$(imageName)
