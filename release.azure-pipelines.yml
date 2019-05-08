@@ -6,7 +6,7 @@ pool:
 
 variables:
   dockerId: ristl17  
-  imageName: dispolist
+  imageName: 'dispolist:$(build.buildNumber)'
 
 steps:
 - script: |
