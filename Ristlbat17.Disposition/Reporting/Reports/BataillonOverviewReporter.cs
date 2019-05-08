@@ -34,14 +34,18 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             var inventoryReport = _context.DispositionReport.Find(report => report.Id == reportId).First();
             _materialReportItems = inventoryReport.MaterialReportItems;
             _servantReportItems = inventoryReport.ServantReportItems;
+
+            // Get company names out of report items
             _companyNames = new List<string>();
             _servantReportItems.ForEach(servantReportItem => servantReportItem.PerCompany.ForEach(perCompany => _companyNames.Add(perCompany.Company)));
             _materialReportItems.ForEach(materialReportItem => materialReportItem.PerCompany.ForEach(perCompany => _companyNames.Add(perCompany.Company)));
             _companyNames.Add("Bat");
+            _companyNames = SortCompanyNames(_companyNames.Distinct().ToList());
 
-            _companyNames = _companyNames.Distinct().ToList();
-            _companyNames.Sort(CompanyNameComparer.Instance);
+            // Get grades out of report items
             _gradeDescriptions = SortGradeList(_servantReportItems.Select(servantReportItem => servantReportItem.Grade).ToArray());
+
+            // Get material list out of report items
             _materials = SortMaterialList(_materialReportItems.Select(materialReportItem => materialReportItem.Material).ToList());
 
             // 1. Create excel worksheet

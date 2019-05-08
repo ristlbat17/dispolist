@@ -131,19 +131,27 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                     ?.Description);
             }
 
-            gradeDescriptions.Sort(new GradeRankComparer(StringComparer.CurrentCulture));
+            gradeDescriptions.Sort(GradeRankComparer.Instance);
             return gradeDescriptions;
         }
 
         public static List<Material.Material> SortMaterialList(IEnumerable<Material.Material> materials)
         {
             return materials
-                .OrderBy(material => material.Category, new MaterialCategoryComparer(StringComparer.CurrentCulture))
+                .OrderBy(material => material.Category, MaterialCategoryComparer.Instance)
                 .ThenBy(material => material.ShortDescription).ToList();
         }
 
-        private class GradeRankComparer : IComparer<string>
+        public static List<string> SortCompanyNames(List<string> companyNames)
         {
+            companyNames.Sort(CompanyNameComparer.Instance);
+            return companyNames;
+        }
+
+        public class GradeRankComparer : IComparer<string>
+        {
+            public static GradeRankComparer Instance => new GradeRankComparer(StringComparer.CurrentCulture);
+
             private readonly IComparer<string> _gradeRankComparer;
 
             public GradeRankComparer(IComparer<string> gradeRankComparer)
@@ -153,51 +161,51 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
             public int Compare(string gradeRank1, string gradeRank2)
             {
-                if (_gradeRankComparer.Compare(gradeRank1, gradeRank2) == 0)
+                if (string.Equals(gradeRank1, gradeRank2))
                 {
                     return 0;
                 }
 
                 // "Of" comes first
-                if (_gradeRankComparer.Compare(gradeRank1, "Of") == 0)
+                if (string.Equals(gradeRank1, "Of"))
                 {
                     return -1;
                 }
 
-                if (_gradeRankComparer.Compare(gradeRank2, "Of") == 0)
+                if (string.Equals(gradeRank2, "Of"))
                 {
                     return 1;
                 }
 
                 // "Höh Uof" comes second
-                if (_gradeRankComparer.Compare(gradeRank1, "Höh Uof") == 0)
+                if (string.Equals(gradeRank1, "Höh Uof"))
                 {
                     return -1;
                 }
 
-                if (_gradeRankComparer.Compare(gradeRank2, "Höh Uof") == 0)
+                if (string.Equals(gradeRank2, "Höh Uof"))
                 {
                     return 1;
                 }
 
                 // "Uof" comes third
-                if (_gradeRankComparer.Compare(gradeRank1, "Uof") == 0)
+                if (string.Equals(gradeRank1, "Uof"))
                 {
                     return -1;
                 }
 
-                if (_gradeRankComparer.Compare(gradeRank2, "Uof") == 0)
+                if (string.Equals(gradeRank2, "Uof"))
                 {
                     return 1;
                 }
 
                 // "Mannschaft" comes fourth
-                if (_gradeRankComparer.Compare(gradeRank1, "Mannschaft") == 0)
+                if (string.Equals(gradeRank1, "Mannschaft"))
                 {
                     return -1;
                 }
 
-                if (_gradeRankComparer.Compare(gradeRank2, "Mannschaft") == 0)
+                if (string.Equals(gradeRank2, "Mannschaft"))
                 {
                     return 1;
                 }
@@ -206,8 +214,10 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             }
         }
 
-        private class MaterialCategoryComparer : IComparer<string>
+        public class MaterialCategoryComparer : IComparer<string>
         {
+            public static MaterialCategoryComparer Instance => new MaterialCategoryComparer(StringComparer.CurrentCulture);
+
             private readonly IComparer<string> _materialCategoryComparer;
 
             public MaterialCategoryComparer(IComparer<string> materialCategoryComparer)
@@ -217,62 +227,62 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
             public int Compare(string materialCategory1, string materialCategory2)
             {
-                if (_materialCategoryComparer.Compare(materialCategory1, materialCategory2) == 0)
+                if (string.Equals(materialCategory1, materialCategory2))
                 {
                     return 0;
                 }
 
                 // "Ristl" comes first
-                if (_materialCategoryComparer.Compare(materialCategory1, "Ristl") == 0)
+                if (string.Equals(materialCategory1, "Ristl"))
                 {
                     return -1;
                 }
 
-                if (_materialCategoryComparer.Compare(materialCategory2, "Ristl") == 0)
+                if (string.Equals(materialCategory2, "Ristl"))
                 {
                     return 1;
                 }
 
                 // "Funk" comes second
-                if (_materialCategoryComparer.Compare(materialCategory1, "Funk") == 0)
+                if (string.Equals(materialCategory1, "Funk"))
                 {
                     return -1;
                 }
 
-                if (_materialCategoryComparer.Compare(materialCategory2, "Funk") == 0)
+                if (string.Equals(materialCategory2, "Funk"))
                 {
                     return 1;
                 }
 
                 // "Geheim Mat" comes third
-                if (_materialCategoryComparer.Compare(materialCategory1, "Geheim Mat") == 0)
+                if (string.Equals(materialCategory1, "Geheim Mat"))
                 {
                     return -1;
                 }
 
-                if (_materialCategoryComparer.Compare(materialCategory2, "Geheim Mat") == 0)
+                if (string.Equals(materialCategory2, "Geheim Mat"))
                 {
                     return 1;
                 }
 
                 // "Mat" comes fourth
-                if (_materialCategoryComparer.Compare(materialCategory1, "Mat") == 0)
+                if (string.Equals(materialCategory1, "Mat"))
                 {
                     return -1;
                 }
 
-                if (_materialCategoryComparer.Compare(materialCategory2, "Mat") == 0)
+                if (string.Equals(materialCategory2, "Mat"))
                 {
                     return 1;
                 }
 
                 // "Fz" comes fifth
-                if (_materialCategoryComparer.Compare(materialCategory1, "Fz") == 0)
+                if (string.Equals(materialCategory1, "Fz"))
                 {
                     return -1;
                 }
 
-                if (_materialCategoryComparer.Compare(materialCategory2, "Fz") == 0)
+                if (string.Equals(materialCategory2, "Fz"))
                 {
                     return 1;
                 }

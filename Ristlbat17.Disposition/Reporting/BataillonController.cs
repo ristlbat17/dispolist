@@ -63,28 +63,6 @@ namespace Ristlbat17.Disposition.Reporting
             return File(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileDownloadName);
         }
 
-        [SwaggerOperation(OperationId = nameof(DownloadDetailReport))]
-        [SwaggerResponse(StatusCodes.Status200OK)]
-        [HttpGet("reports/material/detail/{reportId}")]
-        public ActionResult DownloadDetailReport(string reportId)
-        {
-            var inventoryReport = _context.DispositionReport.Find(report => report.Id == reportId).First();
-            var materialReportItems = inventoryReport.MaterialReportItems;
-            var servantReportItems = inventoryReport.ServantReportItems;
-
-            byte[] data;
-            using (var package = new ExcelPackage())
-            {
-                var bataillonDetail = new BataillonDetailReporter(servantReportItems, materialReportItems);
-                bataillonDetail.GenerateBataillonDetailReport(package);
-
-                data = package.GetAsByteArray();
-            }
-
-            var fileDownloadName = $"Dispoliste_Kp_Stao_{inventoryReport.ReportDate:yyyymmdd_HHmmss}.xlsx";
-            return File(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileDownloadName);
-        }
-
         [SwaggerOperation(OperationId = nameof(DeleteReportById))]
         [SwaggerResponse(StatusCodes.Status200OK)]
         [HttpDelete("reports/material/{reportId}")]
