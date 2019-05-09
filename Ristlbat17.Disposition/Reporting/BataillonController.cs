@@ -52,14 +52,14 @@ namespace Ristlbat17.Disposition.Reporting
         public ActionResult DownloadReport(string reportId)
         {
             byte[] data;
-            DateTime inventoryReportDate;
+            string inventoryReportDate;
             using (var package = new ExcelPackage())
             {
                 inventoryReportDate = _bataillonOverviewReporter.GenerateBataillonOverviewReport(package, reportId);
                 data = package.GetAsByteArray();
             }
 
-            var fileDownloadName = $"Dispoliste_Bat_{inventoryReportDate:yyyymmdd_HHmmss}.xlsx";
+            var fileDownloadName = $"Dispoliste_{inventoryReportDate}.xlsx";
             return File(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileDownloadName);
         }
 

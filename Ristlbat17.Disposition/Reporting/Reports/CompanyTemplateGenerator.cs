@@ -49,13 +49,13 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
                 // 7. For each worksheet format input section, add formulas where necessary and unlock certain cells within each worksheet
                 FormatServantInputSection(worksheet, false, startServantList);
-                FormatMaterialInputSection(worksheet,  sortedMaterialList,false, startMaterialList);
+                FormatMaterialInputSection(worksheet, sortedMaterialList, false, startMaterialList);
 
                 // 8. Lock the workbook totally (no password required to unlock the worksheets)
                 ProtectWorksheet(worksheet);
 
                 // 9. Insert headers and footers
-                InsertHeaderFooter(worksheet, worksheet.Name);
+                InsertHeaderFooter(worksheet, worksheet.Name, DateTime.UtcNow);
 
                 // 10 For each worksheet set column widhts
                 SetColumnWidths(worksheet);
@@ -263,13 +263,6 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         {
             worksheet.Protection.IsProtected = true;
             worksheet.Protection.AllowSelectLockedCells = true;
-        }
-
-        private static void SetColumnWidths(ExcelWorksheet worksheet)
-        {
-            worksheet.Column(1).Width = 1.43; // first column has a width of 1.43
-            worksheet.Column(2).AutoFit(); // grade resp. material category or material column is of type auto size
-            worksheet.Column(3).Width = 2.95; // fîrst empty column has a widht of 2.95
         }
     }
 }

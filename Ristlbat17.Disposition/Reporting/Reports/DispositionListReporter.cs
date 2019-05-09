@@ -23,59 +23,18 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         protected List<string> ServantSectionColumnsTotal { get; }
         protected List<string> MaterialSectionColumns { get; }
 
-        protected void InsertTitleSection(ExcelWorksheet worksheet, string worksheetTitle)
+        protected static void SetColumnWidths(ExcelWorksheet worksheet)
         {
-            worksheet.Cells["A1"].Value = worksheetTitle;
-            //worksheet.Cells["A1"].Style.Locked = true;
-            worksheet.Cells["A1"].Style.Font.Bold = true;
-            worksheet.Cells["A1"].Style.Font.Size = 18;
+            worksheet.Column(1).Width = 1.43; // first column has a width of 1.43
+            worksheet.Column(2).AutoFit(); // grade resp. material category or material column is of type auto size
+            worksheet.Column(3).Width = 2.95; // first empty column has a widht of 2.95
         }
 
-        protected void InsertRowDescriptions(ExcelWorksheet worksheet, List<Material.Material> materials, int startRow)
-        {
-            // Iterate over all categories and for each category insert all material short descriptions (i.e. rows)
-            for (int i = 0, row = startRow; i < materials.Count; i++, row++)
-            {
-                if (i == 0 || materials[i].Category != materials[i - 1].Category)
-                {
-                    var categoryCell = "A" + row;
-                    worksheet.Cells[categoryCell].Value = materials[i].Category;
-                    worksheet.Cells[categoryCell].Style.Font.Bold = true;
-                    row++;
-                }
-
-                var descriptionCell = "B" + row;
-                worksheet.Cells[descriptionCell].Value = materials[i].ShortDescription;
-                worksheet.Cells[descriptionCell].Style.Font.Bold = true;
-                worksheet.Cells[descriptionCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-            }
-
-            // category column has a width of 1.43, material column is of type auto size
-            worksheet.Column(1).Width = 1.43;
-            worksheet.Column(2).AutoFit();
-        }
-
-        protected void InsertColumnDescriptions(ExcelWorksheet worksheet, int startRow, int startColumn)
-        {
-            for (var i = 0; i < MaterialSectionColumns.Count; i++)
-            {
-                var headerCell = ColumnIndexToColumnLetter(startColumn + i) + (startRow - 1);
-                worksheet.Cells[headerCell].Value = MaterialSectionColumns[i];
-                worksheet.Cells[headerCell].Style.Font.Bold = true;
-                worksheet.Cells[headerCell].Style.TextRotation = 90;
-                worksheet.Cells[headerCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                worksheet.Cells[headerCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                worksheet.Column(startColumn + i).Width = 3.8;
-            }
-
-            worksheet.Column(startColumn - 1).Width = 2.95;
-        }
-
-        protected static void InsertHeaderFooter(ExcelWorksheet worksheet, string worksheetTitle)
+        protected static void InsertHeaderFooter(ExcelWorksheet worksheet, string worksheetTitle, DateTime utcTimestamp)
         {
             var header = worksheet.HeaderFooter.OddHeader;
             header.InsertPicture(Image.FromStream(typeof(DispositionListReporter).Assembly.GetManifestResourceStream("Ristlbat17.Disposition.Images.Schweizerische_Eidgenossenschaft.png")), PictureAlignment.Left);
-            header.CenteredText = $"KP, {ExcelHeaderFooter.CurrentDate}\nStand {ExcelHeaderFooter.CurrentTime}";
+            header.CenteredText = $"KP, {ConvertUtcTimestamp(utcTimestamp).date}\nStand {ConvertUtcTimestamp(utcTimestamp).time}";
             header.InsertPicture(Image.FromStream(typeof(DispositionListReporter).Assembly.GetManifestResourceStream("Ristlbat17.Disposition.Images.Badge_RistlBat17.png")), PictureAlignment.Right);
 
             var footer = worksheet.HeaderFooter.OddFooter;
@@ -100,6 +59,12 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
             // Print title
             worksheet.PrinterSettings.RepeatRows = new ExcelAddress($"${startPrintTitle}:${endPrintTitle}");
+        }
+
+        protected static (string date, string time, string datetime) ConvertUtcTimestamp(DateTime utcTimestamp)
+        {
+            var localDateTime = DateTime.SpecifyKind(utcTimestamp, DateTimeKind.Utc).ToLocalTime();
+            return (date: localDateTime.ToString("dd.MM.yyyy"), time: localDateTime.ToString("HH:mm"), datetime: localDateTime.ToString("yyyyMMdd_HHmmss"));
         }
 
         protected static string ColumnIndexToColumnLetter(int colIndex)
