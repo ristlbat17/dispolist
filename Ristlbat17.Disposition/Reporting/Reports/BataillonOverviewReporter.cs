@@ -544,6 +544,12 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                     worksheet.Cells[availableCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     worksheet.Cells[availableCell].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[availableCell].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(211, 211, 211));
+
+                    if (worksheet.Cells[damagedCell].Value != null)
+                    {
+                        worksheet.Cells[damagedCell].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        worksheet.Cells[damagedCell].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 50, 50));
+                    }
                 }
             }
         }
@@ -603,6 +609,12 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                     worksheet.Cells[availableCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     worksheet.Cells[availableCell].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[availableCell].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(211, 211, 211));
+
+                    if (worksheet.Cells[damagedCell].Value != null)
+                    {
+                        worksheet.Cells[damagedCell].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        worksheet.Cells[damagedCell].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 50, 50));
+                    }
                 }
             }
         }
