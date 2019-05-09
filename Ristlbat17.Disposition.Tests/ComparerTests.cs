@@ -11,7 +11,6 @@ namespace Ristlbat17.Disposition.Tests
         [InlineData("Stab", "Stabskp")]
         [InlineData("Stabs Kp", "Kp")]
         [InlineData("Stabskp", "Kp")]
-        [InlineData("Kp", "Bat")]
         public void CompanyNameComparerTests(string companyName1, string companyName2)
         {
             var sut = CompanyNameComparer.Instance;
@@ -37,6 +36,16 @@ namespace Ristlbat17.Disposition.Tests
         {
             var sut = GradeRankComparer.Instance;
             sut.Compare(gradeRank1, gradeRank2).Should().BeLessThan(0);
+        }
+
+        [Theory]
+        [InlineData("KP Rw", "KP Front")]
+        [InlineData("KP Front", "Luzern")]
+        [InlineData("Luzern", "Zürich")]
+        public void CompanyLocationComparerTests(string companyLocation1, string companyLocation2)
+        {
+            var sut = CompanyLocationComparer.Instance;
+            sut.Compare(companyLocation1, companyLocation2).Should().BeLessThan(0);
         }
     }
 }
