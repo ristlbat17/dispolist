@@ -6,4 +6,5 @@ master ci build
 
 master release
 
-[![Build Status](https://dev.azure.com/Ristlbat17/Ristlbat17/_apis/build/status/dispolist-release?branchName=feature/release-pipline)](https://dev.azure.com/Ristlbat17/Ristlbat17/_build/latest?definitionId=4&branchName=feature/release-pipline)
+
+[![Build Status](https://dev.azure.com/Ristlbat17/Ristlbat17/_apis/build/status/dispolist/dispolist-release?branchName=master)](https://dev.azure.com/Ristlbat17/Ristlbat17/_build/latest?definitionId=4&branchName=master)
