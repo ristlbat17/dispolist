@@ -68,6 +68,11 @@ namespace Ristlbat17.Disposition.Servants
             return _context.ServantInventory.Find(item => item.Company == company).ToListAsync();
         }
 
+        public async Task<List<ServantInventoryItem>> GetInventoryForAll()
+        {
+            return await _context.ServantInventory.Find(FilterDefinition<ServantInventoryItem>.Empty).ToListAsync();
+        }
+
         public async Task MoveStockToDefaultLocation(string companyId, IReadOnlyCollection<string> removedLocations)
         {
             var current = await _context.Companies.Find(comp => comp.Id == companyId).SingleAsync();

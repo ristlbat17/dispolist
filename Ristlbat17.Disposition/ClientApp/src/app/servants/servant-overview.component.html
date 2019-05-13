@@ -1,12 +1,20 @@
 <h1>Personalübersicht</h1>
 <div class="thumbnail" style="margin-top:50px;">
-<div class="row" style="margin: 5px">
-  <div class="form-group">
-    <label for="selectedCompany">Kompanie</label>
-    <ng-select name="selectedCompany" [items]="displayCompanyNames" [addTag]="false" [(ngModel)]="selectedCompany"
-      required="required" placeholder="Kompanie auswählen ..." (change)="loadInventory()">
-    </ng-select>
+  <div class="row" style="margin: 5px">
+    <div class="form-group">
+      <label for="selectedCompany">Kompanie</label>
+      <ng-select name="selectedCompany" [items]="displayCompanyNames" [addTag]="false" [(ngModel)]="selectedCompany"
+        required="required" placeholder="Kompanie auswählen ..." (change)="loadServantInventory()">
+      </ng-select>
+    </div>
   </div>
 </div>
-</div>
 
+<div *ngIf="selectedCompany">
+
+  <div *ngIf="inventoryList?.length == 0">
+    <h3>Kein Personal gebucht</h3>
+  </div>
+
+
+</div>

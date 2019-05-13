@@ -16,6 +16,8 @@ namespace Ristlbat17.Disposition.Servants
 
         Task<List<ServantInventoryItem>> GetInventory(string company);
 
+        Task<List<ServantInventoryItem>> GetInventoryForAll();
+
         Task MoveStockToDefaultLocation(string companyId, IReadOnlyCollection<string> removedLocations);
     }
 }
