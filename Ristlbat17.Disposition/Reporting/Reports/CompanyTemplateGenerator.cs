@@ -67,15 +67,15 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private static IEnumerable<ExcelWorksheet> GenerateWorksheets(ExcelPackage package, Company company)
         {
-            var locations = company.Locations.Select(location => location.Name).ToList();
-            locations.Remove(company.DefaultLocation.Name);
+            var sortedCompanyLocations = SortCompanyLocations(company.Locations.Select(location => location.Name).ToList());
+            sortedCompanyLocations.Remove(company.DefaultLocation.Name);
 
             var worksheets = new List<ExcelWorksheet>
             {
                 package.Workbook.Worksheets.Add(CumulatedSheetDescription),
                 package.Workbook.Worksheets.Add(company.DefaultLocation.Name)
             };
-            locations.ForEach(location => worksheets.Add(package.Workbook.Worksheets.Add(location)));
+            sortedCompanyLocations.ForEach(location => worksheets.Add(package.Workbook.Worksheets.Add(location)));
 
             return worksheets;
         }
