@@ -16,13 +16,17 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         // TODO @Klamir refactor so that the values are passed along 
         private int _startRow, _startColumn;
 
-        private static readonly List<string> GradeDescriptions = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
+        private static List<ExcelWorksheet> worksheets;
+        private static List<string> sortedGradeList;
+        private static List<Material.Material> sortedMaterialList;
 
         public void GenerateCompanyTemplate(ExcelPackage package, Company company, List<Material.Material> materials)
         {
+            sortedGradeList = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
+            sortedMaterialList = SortMaterialList(materials);
+
             // 1. Create excel worksheets (one foreach location and total, default location will be the second worksheet right after the cumulated sheet)
-            var worksheets = GenerateWorksheets(package, company);
-            var sortedMaterialList = SortMaterialList(materials);
+            worksheets = GenerateWorksheets(package, company);
 
             foreach (var worksheet in worksheets)
             {
@@ -65,7 +69,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             }
         }
 
-        private static IEnumerable<ExcelWorksheet> GenerateWorksheets(ExcelPackage package, Company company)
+        private static List<ExcelWorksheet> GenerateWorksheets(ExcelPackage package, Company company)
         {
             var sortedCompanyLocations = SortCompanyLocations(company.Locations.Select(location => location.Name).ToList());
             sortedCompanyLocations.Remove(company.DefaultLocation.Name);
@@ -106,7 +110,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private void InsertServantSectionRows(ExcelWorksheet worksheet)
         {
-            foreach (var gradeDescription in GradeDescriptions)
+            foreach (var gradeDescription in sortedGradeList)
             {
                 var gradeCell = ColumnIndexToColumnLetter(2) + (++_startRow);
                 worksheet.Cells[gradeCell].Value = gradeDescription;
@@ -157,10 +161,10 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private void FormatServantInputSection(ExcelWorksheet worksheet, bool inputLocked, int startRow)
         {
-            string idealCellTotalFormula, stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula, availableCellTotalFormual;
-            idealCellTotalFormula = stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = availableCellTotalFormual = "0";
+            string idealCellTotalFormula, stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula, availableCellTotalFormula;
+            idealCellTotalFormula = stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = availableCellTotalFormula = "0";
             
-            for (int i = 0, row = startRow + 1; i < GradeDescriptions.Count + 1; i++, row++)
+            for (int i = 0, row = startRow + 1; i < sortedGradeList.Count + 1; i++, row++)
             {
                 var startColumn = _startColumn;
 
@@ -177,7 +181,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 var stockCell = ColumnIndexToColumnLetter(startColumn) + row;
                 worksheet.Cells[stockCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                 worksheet.Cells[stockCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
+                
                 // used
                 var usedCell = ColumnIndexToColumnLetter(startColumn + 1) + row;
                 worksheet.Cells[usedCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
@@ -195,22 +199,32 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 worksheet.Cells[availableCell].Style.Fill.PatternType = ExcelFillStyle.Solid;
                 worksheet.Cells[availableCell].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(211, 211, 211));
 
-                if (i == GradeDescriptions.Count)
+                // fill worksheet with name "Total" with formulas
+                if (worksheet.Name == CumulatedSheetDescription)
+                {
+                    worksheet.Cells[stockCell].Formula = string.Format("0+{0}", string.Join("+", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
+                    worksheet.Cells[usedCell].Formula = string.Format("0+{0}", string.Join("+", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
+                    worksheet.Cells[detachedCell].Formula = string.Format("0+{0}", string.Join("+", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                }
+
+                // last row (sum up servant quantities per worksheet)
+                if (i == sortedGradeList.Count)
                 {
                     worksheet.Cells[idealCell].Formula = idealCellTotalFormula;
                     worksheet.Cells[stockCell].Formula = stockCellTotalFormula; // overwrites ideal cell formula as long as worksheet name is not "Total"
                     worksheet.Cells[usedCell].Formula = usedCellTotalFormula;
                     worksheet.Cells[detachedCell].Formula = detachedCellTotalFormula;
-                    worksheet.Cells[availableCell].Formula = availableCellTotalFormual;
+                    worksheet.Cells[availableCell].Formula = availableCellTotalFormula;
                 } else
                 {
                     idealCellTotalFormula += " + " + idealCell;
                     stockCellTotalFormula += " + " + stockCell;
                     usedCellTotalFormula += " + " + usedCell;
                     detachedCellTotalFormula += " + " + detachedCell;
-                    availableCellTotalFormual += " + " + availableCell;
+                    availableCellTotalFormula += " + " + availableCell;
                 }
 
+                // last column (available per grade)
                 worksheet.Cells[availableCell].Formula = string.Format("{0}-{1}-{2}", stockCell, usedCell, detachedCell);
 
                 worksheet.Cells[stockCell].Style.Locked = inputLocked;
