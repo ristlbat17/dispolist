@@ -161,8 +161,8 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private void FormatServantInputSection(ExcelWorksheet worksheet, bool inputLocked, int startRow)
         {
-            string idealCellTotalFormula, stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula, availableCellTotalFormula;
-            idealCellTotalFormula = stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = availableCellTotalFormula = "0";
+            string idealCellTotalFormula, stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula;
+            idealCellTotalFormula = stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = "0";
             
             for (int i = 0, row = startRow + 1; i < sortedGradeList.Count + 1; i++, row++)
             {
@@ -202,30 +202,28 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // fill worksheet with name "Total" with formulas
                 if (worksheet.Name == CumulatedSheetDescription)
                 {
-                    worksheet.Cells[stockCell].Formula = string.Format("0+{0}", string.Join("+", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
-                    worksheet.Cells[usedCell].Formula = string.Format("0+{0}", string.Join("+", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
-                    worksheet.Cells[detachedCell].Formula = string.Format("0+{0}", string.Join("+", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
+                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
+                    worksheet.Cells[detachedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
                 }
 
                 // last row (sum up servant quantities per worksheet)
                 if (i == sortedGradeList.Count)
                 {
-                    worksheet.Cells[idealCell].Formula = idealCellTotalFormula;
-                    worksheet.Cells[stockCell].Formula = stockCellTotalFormula; // overwrites ideal cell formula as long as worksheet name is not "Total"
-                    worksheet.Cells[usedCell].Formula = usedCellTotalFormula;
-                    worksheet.Cells[detachedCell].Formula = detachedCellTotalFormula;
-                    worksheet.Cells[availableCell].Formula = availableCellTotalFormula;
+                    worksheet.Cells[idealCell].Formula = string.Format("sum({0})", idealCellTotalFormula);
+                    worksheet.Cells[stockCell].Formula = string.Format("sum({0})", stockCellTotalFormula); // overwrites ideal cell formula as long as worksheet name is not "Total"
+                    worksheet.Cells[usedCell].Formula = string.Format("sum({0})", usedCellTotalFormula);
+                    worksheet.Cells[detachedCell].Formula = string.Format("sum({0})", detachedCellTotalFormula);
                 } else
                 {
-                    idealCellTotalFormula += " + " + idealCell;
-                    stockCellTotalFormula += " + " + stockCell;
-                    usedCellTotalFormula += " + " + usedCell;
-                    detachedCellTotalFormula += " + " + detachedCell;
-                    availableCellTotalFormula += " + " + availableCell;
+                    idealCellTotalFormula += "," + idealCell;
+                    stockCellTotalFormula += "," + stockCell;
+                    usedCellTotalFormula += "," + usedCell;
+                    detachedCellTotalFormula += "," + detachedCell;
                 }
 
-                // last column (available per grade)
-                worksheet.Cells[availableCell].Formula = string.Format("{0}-{1}-{2}", stockCell, usedCell, detachedCell);
+                // last column (availability per grade)
+                worksheet.Cells[availableCell].Formula = string.Format("sum({0},sum({1})*(-1),sum({2})*(-1))", stockCell, usedCell, detachedCell);
 
                 worksheet.Cells[stockCell].Style.Locked = inputLocked;
                 worksheet.Cells[usedCell].Style.Locked = inputLocked;
@@ -249,27 +247,42 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                     startColumn++;
                 }
 
+                // stock
                 var stockCell = ColumnIndexToColumnLetter(startColumn) + row;
-                var usedCell = ColumnIndexToColumnLetter(startColumn + 1) + row;
-                var damagedCell = ColumnIndexToColumnLetter(startColumn + 2) + row;
-                var availableCell = ColumnIndexToColumnLetter(startColumn + 3) + row;
-
-                worksheet.Cells[availableCell].Formula = $"{stockCell}-{usedCell}-{damagedCell}";
-
-                worksheet.Cells[stockCell].Style.Locked = false;
-                worksheet.Cells[usedCell].Style.Locked = false;
-                worksheet.Cells[damagedCell].Style.Locked = false;
-
                 worksheet.Cells[stockCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                 worksheet.Cells[stockCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                // used
+                var usedCell = ColumnIndexToColumnLetter(startColumn + 1) + row;
                 worksheet.Cells[usedCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                 worksheet.Cells[usedCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                // damaged
+                var damagedCell = ColumnIndexToColumnLetter(startColumn + 2) + row;
                 worksheet.Cells[damagedCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                 worksheet.Cells[damagedCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                // available
+                var availableCell = ColumnIndexToColumnLetter(startColumn + 3) + row;
                 worksheet.Cells[availableCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                 worksheet.Cells[availableCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 worksheet.Cells[availableCell].Style.Fill.PatternType = ExcelFillStyle.Solid;
                 worksheet.Cells[availableCell].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(211, 211, 211));
+
+                // fill worksheet with name "Total" with formulas
+                if (worksheet.Name == CumulatedSheetDescription)
+                {
+                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
+                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
+                    worksheet.Cells[damagedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                }
+
+                // last column (availability per material)
+                worksheet.Cells[availableCell].Formula = string.Format("sum({0},sum({1})*(-1),sum({2})*(-1))", stockCell, usedCell, damagedCell);
+
+                worksheet.Cells[stockCell].Style.Locked = false;
+                worksheet.Cells[usedCell].Style.Locked = false;
+                worksheet.Cells[damagedCell].Style.Locked = false;
             }
         }
 
