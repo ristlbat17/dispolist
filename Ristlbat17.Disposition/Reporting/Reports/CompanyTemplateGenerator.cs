@@ -1,4 +1,5 @@
-﻿using OfficeOpenXml;
+﻿using MongoDB.Driver;
+using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using Ristlbat17.Disposition.Material;
 using Ristlbat17.Disposition.Servants;
@@ -13,22 +14,31 @@ namespace Ristlbat17.Disposition.Reporting.Reports
     {
         private const string CumulatedSheetDescription = "Total";
 
-        // TODO @Klamir refactor so that the values are passed along 
         private int _startRow, _startColumn;
 
-        private static List<ExcelWorksheet> worksheets;
-        private static List<string> sortedGradeList;
-        private static List<Material.Material> sortedMaterialList;
+        private List<ExcelWorksheet> _worksheets;
+        private List<string> _sortedGradeList;
+        private List<Material.Material> _sortedMaterialList;
+        private Company company;
 
-        public void GenerateCompanyTemplate(ExcelPackage package, Company company, List<Material.Material> materials)
+        private readonly IMaterialDispositionContext _context;
+
+        public CompanyTemplateGenerator(IMaterialDispositionContext context)
         {
-            sortedGradeList = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
-            sortedMaterialList = SortMaterialList(materials);
+            _context = context;
+        }
+
+        public void GenerateCompanyTemplate(ExcelPackage package, string companyName)
+        {
+            company = _context.Companies.Find(_ => _.Name == companyName).First();
+
+            _sortedGradeList = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
+            _sortedMaterialList = SortMaterialList(_context.Material.Find(_ => true).ToList());
 
             // 1. Create excel worksheets (one foreach location and total, default location will be the second worksheet right after the cumulated sheet)
-            worksheets = GenerateWorksheets(package, company);
+            _worksheets = GenerateWorksheets(package, company);
 
-            foreach (var worksheet in worksheets)
+            foreach (var worksheet in _worksheets)
             {
                 // 2. Define start row and start column
                 _startRow = 1;
@@ -49,11 +59,11 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // 5. For each worksheet insert material list and according columns
                 var startMaterialList = _startRow;
                 InsertMaterialSectionColumns(worksheet, MaterialSectionColumns, worksheet.Name == CumulatedSheetDescription ? _startColumn + 1 : _startColumn);
-                InsertMaterialSectionRows(worksheet, sortedMaterialList);
+                InsertMaterialSectionRows(worksheet, _sortedMaterialList);
 
                 // 7. For each worksheet format input section, add formulas where necessary and unlock certain cells within each worksheet
                 FormatServantInputSection(worksheet, false, startServantList);
-                FormatMaterialInputSection(worksheet, sortedMaterialList, false, startMaterialList);
+                FormatMaterialInputSection(worksheet, _sortedMaterialList, false, startMaterialList);
 
                 // 8. Lock the workbook totally (no password required to unlock the worksheets)
                 ProtectWorksheet(worksheet);
@@ -110,7 +120,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private void InsertServantSectionRows(ExcelWorksheet worksheet)
         {
-            foreach (var gradeDescription in sortedGradeList)
+            foreach (var gradeDescription in _sortedGradeList)
             {
                 var gradeCell = ColumnIndexToColumnLetter(2) + (++_startRow);
                 worksheet.Cells[gradeCell].Value = gradeDescription;
@@ -164,7 +174,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             string idealCellTotalFormula, stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula;
             idealCellTotalFormula = stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = "0";
             
-            for (int i = 0, row = startRow + 1; i < sortedGradeList.Count + 1; i++, row++)
+            for (int i = 0, row = startRow + 1; i < _sortedGradeList.Count + 1; i++, row++)
             {
                 var startColumn = _startColumn;
 
@@ -202,13 +212,13 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // fill worksheet with name "Total" with formulas
                 if (worksheet.Name == CumulatedSheetDescription)
                 {
-                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
-                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
-                    worksheet.Cells[detachedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
+                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
+                    worksheet.Cells[detachedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
                 }
 
                 // last row (sum up servant quantities per worksheet)
-                if (i == sortedGradeList.Count)
+                if (i == _sortedGradeList.Count)
                 {
                     worksheet.Cells[idealCell].Formula = string.Format("sum({0})", idealCellTotalFormula);
                     worksheet.Cells[stockCell].Formula = string.Format("sum({0})", stockCellTotalFormula); // overwrites ideal cell formula as long as worksheet name is not "Total"
@@ -272,9 +282,9 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // fill worksheet with name "Total" with formulas
                 if (worksheet.Name == CumulatedSheetDescription)
                 {
-                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
-                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
-                    worksheet.Cells[damagedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
+                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
+                    worksheet.Cells[damagedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
                 }
 
                 // last column (availability per material)

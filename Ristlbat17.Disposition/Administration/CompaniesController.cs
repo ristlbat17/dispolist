@@ -23,14 +23,17 @@ namespace Ristlbat17.Disposition.Administration
         private readonly IServantDispositionContext _servantDispositionContext;
         private readonly IMaterialInventoryService _materialInventoryService;
         private readonly IServantInventoryService _servantInventoryService;
+        private readonly CompanyTemplateGenerator _companyTemplateGenerator;
 
         public CompaniesController(IMaterialDispositionContext context,
-            IMaterialInventoryService materialInventoryService, IServantInventoryService servantInventoryService, IServantDispositionContext servantDispositionContext)
+            IMaterialInventoryService materialInventoryService, IServantInventoryService servantInventoryService, IServantDispositionContext servantDispositionContext,
+            CompanyTemplateGenerator companyTemplateGenerator)
         {
             _context = context;
             _materialInventoryService = materialInventoryService;
             _servantInventoryService = servantInventoryService;
             _servantDispositionContext = servantDispositionContext;
+            _companyTemplateGenerator = companyTemplateGenerator;
         }
 
         /// <summary>
@@ -144,18 +147,14 @@ namespace Ristlbat17.Disposition.Administration
         [HttpGet("{companyName}/templates")]
         public ActionResult DownloadCompanyTemplate(string companyName)
         {
-            var company = _context.Companies.Find(_ => _.Name == companyName).First();
-            var materials = _context.Material.Find(_ => true).ToList();
-
             byte[] data;
-
             using (var package = new ExcelPackage())
             {
-                new CompanyTemplateGenerator().GenerateCompanyTemplate(package, company, materials);
+                _companyTemplateGenerator.GenerateCompanyTemplate(package, companyName);
                 data = package.GetAsByteArray();
             }
 
-            var fileDownloadName = $"Dispoliste {company.Name}.xlsx";
+            var fileDownloadName = $"Dispoliste_{companyName}.xlsx";
             return File(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileDownloadName);
         }
 

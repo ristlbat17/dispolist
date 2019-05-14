@@ -65,6 +65,7 @@ namespace Ristlbat17.Disposition
             services.AddSingleton<IServantInventoryService, ServantInventoryService>();
             services.AddTransient<IBataillonReporter, BataillonReporter>();
             services.AddTransient<BataillonOverviewReporter>();
+            services.AddTransient<CompanyTemplateGenerator>();
             SetMongoDbConventions();
 
             SetupInitialData(services.BuildServiceProvider().GetService<IMaterialDispositionContext>());
