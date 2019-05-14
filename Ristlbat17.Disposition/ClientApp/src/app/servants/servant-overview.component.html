@@ -1,0 +1,82 @@
+<h1>Personalübersicht</h1>
+<div class="thumbnail" style="margin-top:50px;">
+  <div class="row" style="margin: 5px">
+    <div class="form-group">
+      <label for="selectedCompany">Kompanie</label>
+      <ng-select name="selectedCompany" [items]="displayCompanyNames" [addTag]="false" [(ngModel)]="selectedCompany"
+        required="required" placeholder="Kompanie auswählen ..." (change)="loadServantInventory()">
+      </ng-select>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="selectedCompany && inventoryList">
+
+  <div *ngIf="selectedCompany == 'Alle'">
+    <div *ngFor="let company of companies">
+      <h2>{{company.name}}</h2>
+
+      <div *ngIf="getServantInventoryListByCompany(company.name)?.length == 0">
+        <h5>Kein Personal gebucht</h5>
+      </div>
+
+      <div *ngFor="let inventory of getServantInventoryListByCompany(company.name)">
+        <h4>{{getGradeText(inventory.grade) }}</h4>
+
+        <div *ngFor="let allocation of inventory.distribution" style="padding: 10px;">
+
+          <div class="col-sm-2">
+            {{allocation.location}}
+          </div>
+          <servant-allocation [allocation]="allocation"></servant-allocation>
+
+        </div>
+        <hr style="margin: 10px 0" />
+        <div style="padding:10px;font-weight: bold;background-color: #f2f2f2" class="row thumbnail">
+          <div class="col-sm-2">
+            Total
+          </div>
+          <servant-allocation [allocation]="getSummedAllocation(inventory)"></servant-allocation>
+        </div>
+
+
+      </div>
+      <div style="margin: 50px 0"></div>
+
+
+    </div>
+  </div>
+
+
+  <div *ngIf="!(selectedCompany == 'Alle')">
+
+    <div *ngIf="inventoryList?.length == 0">
+      <h3>Kein Personal gebucht</h3>
+    </div>
+
+    <h2>{{selectedCompany}}</h2>
+    <div *ngFor="let inventory of inventoryList">
+
+      <h4>{{getGradeText(inventory.grade) }}</h4>
+
+      <div *ngFor="let allocation of inventory.distribution" style="padding: 10px;">
+
+        <div class="col-sm-2">
+          {{allocation.location}}
+        </div>
+        <servant-allocation [allocation]="allocation"></servant-allocation>
+
+      </div>
+      <hr style="margin: 10px 0" />
+      <div style="padding:10px;font-weight: bold;background-color: #f2f2f2" class="row thumbnail">
+        <div class="col-sm-2">
+          Total
+        </div>
+        <servant-allocation [allocation]="getSummedAllocation(inventory)"></servant-allocation>
+      </div>
+
+    </div>
+
+
+  </div>
+</div>
