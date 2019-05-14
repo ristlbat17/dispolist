@@ -17,9 +17,9 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         private int _startRow, _startColumn;
 
         private List<ExcelWorksheet> _worksheets;
-        private List<string> _sortedGradeList;
-        private List<Material.Material> _sortedMaterialList;
         private Company company;
+        private List<string> _gradeDescriptions;
+        private List<Material.Material> _materials;
 
         private readonly IMaterialDispositionContext _context;
 
@@ -32,8 +32,8 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         {
             company = _context.Companies.Find(_ => _.Name == companyName).First();
 
-            _sortedGradeList = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
-            _sortedMaterialList = SortMaterialList(_context.Material.Find(_ => true).ToList());
+            _gradeDescriptions = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
+            _materials = SortMaterialList(_context.Material.Find(_ => true).ToList());
 
             // 1. Create excel worksheets (one foreach location and total, default location will be the second worksheet right after the cumulated sheet)
             _worksheets = GenerateWorksheets(package, company);
@@ -59,11 +59,11 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // 5. For each worksheet insert material list and according columns
                 var startMaterialList = _startRow;
                 InsertMaterialSectionColumns(worksheet, MaterialSectionColumns, worksheet.Name == CumulatedSheetDescription ? _startColumn + 1 : _startColumn);
-                InsertMaterialSectionRows(worksheet, _sortedMaterialList);
+                InsertMaterialSectionRows(worksheet, _materials);
 
                 // 7. For each worksheet format input section, add formulas where necessary and unlock certain cells within each worksheet
                 FormatServantInputSection(worksheet, false, startServantList);
-                FormatMaterialInputSection(worksheet, _sortedMaterialList, false, startMaterialList);
+                FormatMaterialInputSection(worksheet, _materials, false, startMaterialList);
 
                 // 8. Lock the workbook totally (no password required to unlock the worksheets)
                 ProtectWorksheet(worksheet);
@@ -120,7 +120,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private void InsertServantSectionRows(ExcelWorksheet worksheet)
         {
-            foreach (var gradeDescription in _sortedGradeList)
+            foreach (var gradeDescription in _gradeDescriptions)
             {
                 var gradeCell = ColumnIndexToColumnLetter(2) + (++_startRow);
                 worksheet.Cells[gradeCell].Value = gradeDescription;
@@ -174,7 +174,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             string idealCellTotalFormula, stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula;
             idealCellTotalFormula = stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = "0";
             
-            for (int i = 0, row = startRow + 1; i < _sortedGradeList.Count + 1; i++, row++)
+            for (int i = 0, row = startRow + 1; i < _gradeDescriptions.Count + 1; i++, row++)
             {
                 var startColumn = _startColumn;
 
@@ -218,7 +218,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 }
 
                 // last row (sum up servant quantities per worksheet)
-                if (i == _sortedGradeList.Count)
+                if (i == _gradeDescriptions.Count)
                 {
                     worksheet.Cells[idealCell].Formula = string.Format("sum({0})", idealCellTotalFormula);
                     worksheet.Cells[stockCell].Formula = string.Format("sum({0})", stockCellTotalFormula); // overwrites ideal cell formula as long as worksheet name is not "Total"

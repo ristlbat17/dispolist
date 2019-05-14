@@ -8,6 +8,7 @@ using Mongo2Go;
 using MongoDB.Driver;
 using Ristlbat17.Disposition.Administration;
 using Ristlbat17.Disposition.Material;
+using Ristlbat17.Disposition.Reporting.Reports;
 using Ristlbat17.Disposition.Servants;
 using Xunit;
 
@@ -27,7 +28,9 @@ namespace Ristlbat17.Disposition.Tests
             var inventoryService = new MaterialInventoryService(_materialDispositionContext);
             var servantInventoryService = new ServantInventoryService(_servantDispositionContext);
 
-            _sut = new CompaniesController(_materialDispositionContext, inventoryService, servantInventoryService, _servantDispositionContext);
+            var companyTemplateGenerator = new CompanyTemplateGenerator(dispositionContext);
+
+            _sut = new CompaniesController(_materialDispositionContext, inventoryService, servantInventoryService, _servantDispositionContext, companyTemplateGenerator);
         }
 
         public void Dispose()

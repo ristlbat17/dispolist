@@ -154,7 +154,7 @@ namespace Ristlbat17.Disposition.Administration
                 data = package.GetAsByteArray();
             }
 
-            var fileDownloadName = $"Dispoliste_{companyName}.xlsx";
+            var fileDownloadName = $"Dispoliste {companyName}.xlsx";
             return File(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileDownloadName);
         }
 
