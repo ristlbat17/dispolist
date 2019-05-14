@@ -30,27 +30,48 @@ export class ServantOverviewComponent implements OnInit {
         });
       }
 
-      public async loadInventory() {
+      public async loadServantInventory() {
         const tempList = this.selectedCompany === 'Alle' ?
         await this.inventoryClient.getServantInventoryForAll().toPromise() :
         await this.inventoryClient.getServantInventory(this.selectedCompany).toPromise();
 
-        /*this.inventoryList = tempList
-          .sort((n1, n2) => {
-            if (n1.shortDescription > n2.shortDescription) {
-              return 1;
-            }
-
-            if (n1.shortDescription < n2.shortDescription) {
-              return -1;
-            }
-
-            return 0;
-          });*/
+        this.inventoryList = tempList;
       }
       public getServantInventoryListByCompany(company: String): ServantInventoryItem[] {
+        if (company === 'Alle') {
+          return;
+        }
+
         this.filteredInventoryList = this.inventoryList.filter(item => item.company === company);
         return this.filteredInventoryList;
       }
+      public getGradeText(grade: Number) {
+          if (grade === 0) {
+            return 'Offiziere';
+          } else if (grade === 1) {
+            return 'Höhere Unteroffiziere';
+          } else if (grade === 2) {
+            return 'Unteroffiziere';
+          } else {
+            return 'Mannschaft';
+          }
+      }
+      public getSummedAllocation(iventory: ServantInventoryItem) {
+        if (iventory && iventory.distribution) {
+          return new ServantAllocation({
+            stock: iventory.distribution
+              .map(d => d.stock)
+              .reduce((a, b) => a + b, 0),
+            available: iventory.distribution
+              .map(d => d.available)
+              .reduce((a, b) => a + b, 0),
+            detached: iventory.distribution
+              .map(d => d.detached)
+              .reduce((a, b) => a + b, 0),
+            used: iventory.distribution.map(d => d.used).reduce((a, b) => a + b, 0)
+          });
+        }
+      }
+
 
 }
