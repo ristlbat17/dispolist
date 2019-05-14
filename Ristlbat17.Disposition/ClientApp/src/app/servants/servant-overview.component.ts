@@ -38,10 +38,6 @@ export class ServantOverviewComponent implements OnInit {
         this.inventoryList = tempList;
       }
       public getServantInventoryListByCompany(company: String): ServantInventoryItem[] {
-        if (company === 'Alle') {
-          return;
-        }
-
         this.filteredInventoryList = this.inventoryList.filter(item => item.company === company);
         return this.filteredInventoryList;
       }
