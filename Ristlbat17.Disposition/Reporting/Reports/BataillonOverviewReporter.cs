@@ -72,7 +72,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
              * 2. Create one worksheet per company and a cumulated worksheet
             */
 
-            var worksheets = GenerateWorkSheets(package);
+            var worksheets = GenerateWorksheets(package);
 
             /*
              * 3. Fill cumulated worksheet
@@ -168,7 +168,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             return ConvertUtcTimestamp(inventoryReport.ReportDate).datetime;
         }
 
-        private ExcelWorksheets GenerateWorkSheets(ExcelPackage package)
+        private ExcelWorksheets GenerateWorksheets(ExcelPackage package)
         {
             var worksheets = package.Workbook.Worksheets;
             worksheets.Add(CumulatedSheetDescription); // Cumulated worksheet comes first

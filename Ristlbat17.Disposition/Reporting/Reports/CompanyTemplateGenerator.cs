@@ -17,7 +17,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         private int _startRow, _startColumn;
 
         private List<ExcelWorksheet> _worksheets;
-        private Company company;
+        private Company _company;
         private List<string> _gradeDescriptions;
         private List<Material.Material> _materials;
 
@@ -30,13 +30,12 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         public void GenerateCompanyTemplate(ExcelPackage package, string companyName)
         {
-            company = _context.Companies.Find(_ => _.Name == companyName).First();
-
+            _company = _context.Companies.Find(company => company.Name == companyName).First();
             _gradeDescriptions = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
             _materials = SortMaterialList(_context.Material.Find(_ => true).ToList());
 
             // 1. Create excel worksheets (one foreach location and total, default location will be the second worksheet right after the cumulated sheet)
-            _worksheets = GenerateWorksheets(package, company);
+            _worksheets = GenerateWorksheets(package);
 
             foreach (var worksheet in _worksheets)
             {
@@ -44,21 +43,21 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 _startRow = 1;
                 _startColumn = 4;
 
-                // 2. For each worksheet create a worksheet overall title and the servant subtitle
-                InsertWorksheetTitle(worksheet, $"Dispoliste {company.Name}, {(worksheet.Name == CumulatedSheetDescription || worksheet.Name == company.DefaultLocation.Name ? worksheet.Name : $"Standort {worksheet.Name}")}", 1, 18);
+                // 3. For each worksheet create a worksheet overall title and the servant subtitle
+                InsertWorksheetTitle(worksheet, $"Dispoliste {_company.Name}, {(string.Equals(worksheet.Name, CumulatedSheetDescription) || string.Equals(worksheet.Name, _company.DefaultLocation.Name) ? worksheet.Name : $"Standort {worksheet.Name}")}", 1, 18);
                 InsertWorksheetTitle(worksheet, "Personal", 0, 14);
 
-                // 3. For each worksheet insert grade list and according columns
+                // 4. For each worksheet insert grade list and according columns
                 var startServantList = _startRow;
-                InsertServantSectionColumns(worksheet, worksheet.Name == CumulatedSheetDescription ? ServantSectionColumnsTotal : ServantSectionColumns);
+                InsertServantSectionColumns(worksheet, string.Equals(worksheet.Name, CumulatedSheetDescription) ? ServantSectionColumnsTotal : ServantSectionColumns);
                 InsertServantSectionRows(worksheet);
 
-                // 4. For each worksheet create the material subtitle
+                // 5. For each worksheet create the material subtitle
                 InsertWorksheetTitle(worksheet, "Material", 0, 14);
 
-                // 5. For each worksheet insert material list and according columns
+                // 6. For each worksheet insert material list and according columns
                 var startMaterialList = _startRow;
-                InsertMaterialSectionColumns(worksheet, MaterialSectionColumns, worksheet.Name == CumulatedSheetDescription ? _startColumn + 1 : _startColumn);
+                InsertMaterialSectionColumns(worksheet, MaterialSectionColumns, string.Equals(worksheet.Name, CumulatedSheetDescription) ? _startColumn + 1 : _startColumn);
                 InsertMaterialSectionRows(worksheet, _materials);
 
                 // 7. For each worksheet format input section, add formulas where necessary and unlock certain cells within each worksheet
@@ -79,15 +78,15 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             }
         }
 
-        private static List<ExcelWorksheet> GenerateWorksheets(ExcelPackage package, Company company)
+        private List<ExcelWorksheet> GenerateWorksheets(ExcelPackage package)
         {
-            var sortedCompanyLocations = SortCompanyLocations(company.Locations.Select(location => location.Name).ToList());
-            sortedCompanyLocations.Remove(company.DefaultLocation.Name);
+            var sortedCompanyLocations = SortCompanyLocations(_company.Locations.Select(location => location.Name).ToList());
+            sortedCompanyLocations.Remove(_company.DefaultLocation.Name);
 
             var worksheets = new List<ExcelWorksheet>
             {
                 package.Workbook.Worksheets.Add(CumulatedSheetDescription),
-                package.Workbook.Worksheets.Add(company.DefaultLocation.Name)
+                package.Workbook.Worksheets.Add(_company.DefaultLocation.Name)
             };
             sortedCompanyLocations.ForEach(location => worksheets.Add(package.Workbook.Worksheets.Add(location)));
 
@@ -98,7 +97,6 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         {
             var titleCell = ColumnIndexToColumnLetter(1) + _startRow;
             worksheet.Cells[titleCell].Value = worksheetTitle;
-            //worksheet.Cells[titleCell].Style.Locked = false;
             worksheet.Cells[titleCell].Style.Font.Bold = true;
             worksheet.Cells[titleCell].Style.Font.Size = fontSize;
             _startRow += spaceAfter + 1;
