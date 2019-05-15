@@ -1,11 +1,13 @@
 version: '3.7'
 services:
   dispolist:
-    image: ristlbat17/dispolist:2019-Woche1
+    image: ristl17/dispolist:2019-Woche1
     build: .
     environment:
       - 'MongoDb__ConnectionString=mongodb://dispolistdb'
     restart: always
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
     depends_on: 
       - dispolistdb
     ports:
