@@ -16,7 +16,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private int _startRow, _startColumn;
 
-        private List<ExcelWorksheet> _worksheets;
+        private ExcelWorksheets _worksheets;
         private Company _company;
         private List<string> _gradeDescriptions;
         private List<Material.Material> _materials;
@@ -58,11 +58,11 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // 6. For each worksheet insert material list and according columns
                 var startMaterialList = _startRow;
                 InsertMaterialSectionColumns(worksheet, MaterialSectionColumns, string.Equals(worksheet.Name, CumulatedSheetDescription) ? _startColumn + 1 : _startColumn);
-                InsertMaterialSectionRows(worksheet, _materials);
+                InsertMaterialSectionRows(worksheet);
 
                 // 7. For each worksheet format input section, add formulas where necessary and unlock certain cells within each worksheet
-                FormatServantInputSection(worksheet, false, startServantList);
-                FormatMaterialInputSection(worksheet, _materials, false, startMaterialList);
+                FormatServantInputSection(worksheet, startServantList);
+                FormatMaterialInputSection(worksheet, startMaterialList);
 
                 // 8. Lock the workbook totally (no password required to unlock the worksheets)
                 ProtectWorksheet(worksheet);
@@ -78,17 +78,15 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             }
         }
 
-        private List<ExcelWorksheet> GenerateWorksheets(ExcelPackage package)
+        private ExcelWorksheets GenerateWorksheets(ExcelPackage package)
         {
             var sortedCompanyLocations = SortCompanyLocations(_company.Locations.Select(location => location.Name).ToList());
             sortedCompanyLocations.Remove(_company.DefaultLocation.Name);
 
-            var worksheets = new List<ExcelWorksheet>
-            {
-                package.Workbook.Worksheets.Add(CumulatedSheetDescription),
-                package.Workbook.Worksheets.Add(_company.DefaultLocation.Name)
-            };
-            sortedCompanyLocations.ForEach(location => worksheets.Add(package.Workbook.Worksheets.Add(location)));
+            var worksheets = package.Workbook.Worksheets;
+            worksheets.Add(CumulatedSheetDescription);
+            worksheets.Add(_company.DefaultLocation.Name);
+            sortedCompanyLocations.ForEach(location => worksheets.Add(location));
 
             return worksheets;
         }
@@ -148,26 +146,26 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             }
         }
 
-        private void InsertMaterialSectionRows(ExcelWorksheet worksheet, IReadOnlyList<Material.Material> materials)
+        private void InsertMaterialSectionRows(ExcelWorksheet worksheet)
         {
-            for (int i = 0, row = _startRow + 1;  i < materials.Count; i++, row++)
+            for (int i = 0, row = _startRow + 1;  i < _materials.Count; i++, row++)
             {
-                if ((i == 0) || (materials[i].Category != materials[i - 1].Category))
+                if ((i == 0) || (_materials[i].Category != _materials[i - 1].Category))
                 {
                     var categoryCell = ColumnIndexToColumnLetter(1) + row;
-                    worksheet.Cells[categoryCell].Value = materials[i].Category;
+                    worksheet.Cells[categoryCell].Value = _materials[i].Category;
                     worksheet.Cells[categoryCell].Style.Font.Bold = true;
                     row++;
                 }
 
                 var descriptionCell = ColumnIndexToColumnLetter(2) + row;
-                worksheet.Cells[descriptionCell].Value = materials[i].ShortDescription;
+                worksheet.Cells[descriptionCell].Value = _materials[i].ShortDescription;
                 worksheet.Cells[descriptionCell].Style.Font.Bold = true;
                 worksheet.Cells[descriptionCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
             }
         }
 
-        private void FormatServantInputSection(ExcelWorksheet worksheet, bool inputLocked, int startRow)
+        private void FormatServantInputSection(ExcelWorksheet worksheet, int startRow)
         {
             string idealCellTotalFormula, stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula;
             idealCellTotalFormula = stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = "0";
@@ -178,7 +176,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
                 // ideal
                 var idealCell = ColumnIndexToColumnLetter(startColumn) + row;
-                if (worksheet.Name == CumulatedSheetDescription)
+                if (string.Equals(worksheet.Name, CumulatedSheetDescription))
                 {                    
                     worksheet.Cells[idealCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                     worksheet.Cells[idealCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -208,7 +206,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 worksheet.Cells[availableCell].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(211, 211, 211));
 
                 // fill worksheet with name "Total" with formulas
-                if (worksheet.Name == CumulatedSheetDescription)
+                if (string.Equals(worksheet.Name, CumulatedSheetDescription))
                 {
                     worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
                     worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
@@ -233,19 +231,19 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // last column (availability per grade)
                 worksheet.Cells[availableCell].Formula = string.Format("sum({0},sum({1})*(-1),sum({2})*(-1))", stockCell, usedCell, detachedCell);
 
-                worksheet.Cells[stockCell].Style.Locked = inputLocked;
-                worksheet.Cells[usedCell].Style.Locked = inputLocked;
-                worksheet.Cells[detachedCell].Style.Locked = inputLocked;
+                // unlock stock, used and detached cell only if worksheet name is not "Total" / lock last column (availability per grade) in every case
+                worksheet.Cells[stockCell].Style.Locked = worksheet.Cells[usedCell].Style.Locked = worksheet.Cells[detachedCell].Style.Locked 
+                    = string.Equals(worksheet.Name, CumulatedSheetDescription) || i == _gradeDescriptions.Count;
             }
         }
 
-        private void FormatMaterialInputSection(ExcelWorksheet worksheet, IReadOnlyList<Material.Material> materials, bool inputLocked, int startRow)
+        private void FormatMaterialInputSection(ExcelWorksheet worksheet, int startRow)
         {
-            for (int i = 0, row = startRow + 1; i < materials.Count; i++, row++)
+            for (int i = 0, row = startRow + 1; i < _materials.Count; i++, row++)
             {
                 var startColumn = _startColumn;
 
-                if ((i == 0) || (materials[i].Category != materials[i - 1].Category))
+                if ((i == 0) || (_materials[i].Category != _materials[i - 1].Category))
                 {
                     row++;
                 }
@@ -288,16 +286,16 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // last column (availability per material)
                 worksheet.Cells[availableCell].Formula = string.Format("sum({0},sum({1})*(-1),sum({2})*(-1))", stockCell, usedCell, damagedCell);
 
-                worksheet.Cells[stockCell].Style.Locked = false;
-                worksheet.Cells[usedCell].Style.Locked = false;
-                worksheet.Cells[damagedCell].Style.Locked = false;
+                // unlock stock, used and damaged cell only if worksheet name is not "Total"
+                worksheet.Cells[stockCell].Style.Locked = worksheet.Cells[usedCell].Style.Locked = worksheet.Cells[damagedCell].Style.Locked
+                    = string.Equals(worksheet.Name, CumulatedSheetDescription);
             }
         }
 
-        private static void ProtectWorksheet(ExcelWorksheet worksheet)
+        private void ProtectWorksheet(ExcelWorksheet worksheet)
         {
             worksheet.Protection.IsProtected = true;
-            worksheet.Protection.AllowSelectLockedCells = true;
+            worksheet.Protection.AllowSelectLockedCells = false;
         }
     }
 }
