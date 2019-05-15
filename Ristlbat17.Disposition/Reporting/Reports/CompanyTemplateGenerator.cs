@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
 using OfficeOpenXml;
+using OfficeOpenXml.DataValidation;
 using OfficeOpenXml.Style;
 using Ristlbat17.Disposition.Material;
 using Ristlbat17.Disposition.Servants;
@@ -234,6 +235,26 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // unlock stock, used and detached cell only if worksheet name is not "Total" / lock last column (availability per grade) in every case
                 worksheet.Cells[stockCell].Style.Locked = worksheet.Cells[usedCell].Style.Locked = worksheet.Cells[detachedCell].Style.Locked 
                     = string.Equals(worksheet.Name, CumulatedSheetDescription) || i == _gradeDescriptions.Count;
+
+                // data validation
+
+                var stockCellValidation = worksheet.DataValidations.AddCustomValidation(stockCell);
+                var usedCellValidation = worksheet.DataValidations.AddCustomValidation(usedCell);
+                var detachedCellValidation = worksheet.DataValidations.AddCustomValidation(detachedCell);
+
+                stockCellValidation.ErrorStyle = usedCellValidation.ErrorStyle = detachedCellValidation.ErrorStyle = ExcelDataValidationWarningStyle.stop;
+                stockCellValidation.ErrorTitle = usedCellValidation.ErrorTitle = detachedCellValidation.ErrorTitle = "an invalid value was entered";
+                stockCellValidation.ShowErrorMessage = usedCellValidation.ShowErrorMessage = detachedCellValidation.ShowErrorMessage = true;
+                stockCellValidation.Operator = usedCellValidation.Operator = detachedCellValidation.Operator = ExcelDataValidationOperator.equal; // seems to be a bug, you cannot use a formula as long as the operator is set to between which is default setting
+
+                stockCellValidation.Error = "stock must be an integer greater than zero and must be greater than or equal to the sum of used and detached";                
+                stockCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({0}),{0}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
+
+                usedCellValidation.Error = "used must be an integer greater than zero and must be less or equal to the difference of stock and detached";
+                usedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({1}),{1}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
+
+                detachedCellValidation.Error = "detached must be an integer greater than zero and must be less or equal to the difference of stock and used";
+                detachedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({2}),{2}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
             }
         }
 
