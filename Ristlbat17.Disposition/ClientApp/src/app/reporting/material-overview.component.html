@@ -1,9 +1,12 @@
-<div class="row">
-  <div class="form-group">
-    <label for="selectedCompany">Kompanie</label>
-    <ng-select name="selectedCompany" [items]="displayCompanyNames" [addTag]="false" [(ngModel)]="selectedCompany"
-      required="required" placeholder="Kompanie auswählen ..." (change)="loadInventory()">
-    </ng-select>
+<h1>Materialübersicht</h1>
+<div class="thumbnail" style="margin-top:50px;">
+  <div class="row" style="margin: 5px">
+    <div class="form-group">
+      <label for="selectedCompany">Kompanie</label>
+      <ng-select name="selectedCompany" [items]="displayCompanyNames" [addTag]="false" [(ngModel)]="selectedCompany"
+        required="required" placeholder="Kompanie auswählen ..." (change)="loadInventory()">
+      </ng-select>
+    </div>
   </div>
 </div>
 
@@ -21,25 +24,20 @@
           </div>
         </ng-template>
 
-       
+
         <ng-template ngbPanelContent>
           <div *ngFor="let inventory of getInventoryListByMaterial(material.sapNr)">
             <h4>{{ inventory.company }}</h4>
 
             <div *ngFor="let allocation of inventory.distribution" style="padding: 10px;">
-              
-              <material-allocation [allocation]="allocation" [title]="allocation.location" ></material-allocation>
-            </div>
-            <hr style="margin: 10px 0"/>
-            <div
-              style="padding:10px;font-weight: bold;background-color: #f2f2f2"
-              class="row thumbnail"
-            >
 
-              <material-allocation
-                [allocation]="getSummedAllocation(inventory)"
-                [title]="'Total'"
-              ></material-allocation>
+              <material-allocation [allocation]="allocation" [title]="allocation.location"></material-allocation>
+            </div>
+            <hr style="margin: 10px 0" />
+            <div style="padding:10px;font-weight: bold;background-color: #f2f2f2" class="row thumbnail">
+
+              <material-allocation [allocation]="getSummedAllocation(inventory)" [title]="'Total'">
+              </material-allocation>
             </div>
           </div>
         </ng-template>
