@@ -157,10 +157,15 @@ export interface IInventoryClient {
      */
     deleteMaterialById(id: string): Observable<void>;
     /**
-     * Get the inventory for one company
+     * Get the servant inventory for one company
      * @return Success
      */
-    getServantInventoryForLocationAll(company: string): Observable<ServantInventoryItem[]>;
+    getServantInventory(company: string): Observable<ServantInventoryItem[]>;
+    /**
+     * Get the servant inventory for all companies
+     * @return Success
+     */
+    getServantInventoryForAll(): Observable<ServantInventoryItem[]>;
     /**
      * @return Success
      */
@@ -1636,10 +1641,10 @@ export class InventoryClient implements IInventoryClient {
     }
 
     /**
-     * Get the inventory for one company
+     * Get the servant inventory for one company
      * @return Success
      */
-    getServantInventoryForLocationAll(company: string): Observable<ServantInventoryItem[]> {
+    getServantInventory(company: string): Observable<ServantInventoryItem[]> {
         let url_ = this.baseUrl + "/api/ServantsInventory/{company}";
         if (company === undefined || company === null)
             throw new Error("The parameter 'company' must be defined.");
@@ -1655,11 +1660,11 @@ export class InventoryClient implements IInventoryClient {
         };
 
         return this.http.request("get", url_, options_).flatMap((response_ : any) => {
-            return this.processGetServantInventoryForLocationAll(response_);
+            return this.processGetServantInventory(response_);
         }).catch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processGetServantInventoryForLocationAll(<any>response_);
+                    return this.processGetServantInventory(<any>response_);
                 } catch (e) {
                     return <Observable<ServantInventoryItem[]>><any>Observable.throw(e);
                 }
@@ -1668,7 +1673,63 @@ export class InventoryClient implements IInventoryClient {
         });
     }
 
-    protected processGetServantInventoryForLocationAll(response: HttpResponseBase): Observable<ServantInventoryItem[]> {
+    protected processGetServantInventory(response: HttpResponseBase): Observable<ServantInventoryItem[]> {
+        const status = response.status;
+        const responseBlob = 
+            response instanceof HttpResponse ? response.body : 
+            (<any>response).error instanceof Blob ? (<any>response).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }};
+        if (status === 200) {
+            return blobToText(responseBlob).flatMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (resultData200 && resultData200.constructor === Array) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200.push(ServantInventoryItem.fromJS(item));
+            }
+            return Observable.of(result200);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).flatMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Observable.of<ServantInventoryItem[]>(<any>null);
+    }
+
+    /**
+     * Get the servant inventory for all companies
+     * @return Success
+     */
+    getServantInventoryForAll(): Observable<ServantInventoryItem[]> {
+        let url_ = this.baseUrl + "/api/ServantsInventory";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).flatMap((response_ : any) => {
+            return this.processGetServantInventoryForAll(response_);
+        }).catch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetServantInventoryForAll(<any>response_);
+                } catch (e) {
+                    return <Observable<ServantInventoryItem[]>><any>Observable.throw(e);
+                }
+            } else
+                return <Observable<ServantInventoryItem[]>><any>Observable.throw(response_);
+        });
+    }
+
+    protected processGetServantInventoryForAll(response: HttpResponseBase): Observable<ServantInventoryItem[]> {
         const status = response.status;
         const responseBlob = 
             response instanceof HttpResponse ? response.body : 

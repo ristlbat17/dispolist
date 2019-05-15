@@ -21,16 +21,27 @@ namespace Ristlbat17.Disposition.Servants
 
 
         /// <summary>
-        ///     Get the inventory for one company
+        ///     Get the servant inventory for one company
         /// </summary>
         /// <param name="company"></param>
         /// <returns></returns>
         [SwaggerResponse(StatusCodes.Status200OK)]
-        [SwaggerOperation(OperationId = nameof(GetServantInventoryForLocation))]
+        [SwaggerOperation(OperationId = nameof(GetServantInventory))]
         [HttpGet("{company}")]
         public async Task<ActionResult<IEnumerable<ServantInventoryItem>>> GetServantInventory(string company)
         {
             return await _inventoryService.GetInventory(company);
+        }
+        /// <summary>
+        ///     Get the servant inventory for all companies
+        /// </summary>
+        /// <returns></returns>
+        [SwaggerResponse(StatusCodes.Status200OK)]
+        [SwaggerOperation(OperationId = nameof(GetServantInventoryForAll))]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ServantInventoryItem>>> GetServantInventoryForAll()
+        {
+            return await _inventoryService.GetInventoryForAll();
         }
 
         [SwaggerResponse(StatusCodes.Status200OK)]
