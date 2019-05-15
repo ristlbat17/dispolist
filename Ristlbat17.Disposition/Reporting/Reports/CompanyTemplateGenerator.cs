@@ -310,6 +310,26 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // unlock stock, used and damaged cell only if worksheet name is not "Total"
                 worksheet.Cells[stockCell].Style.Locked = worksheet.Cells[usedCell].Style.Locked = worksheet.Cells[damagedCell].Style.Locked
                     = string.Equals(worksheet.Name, CumulatedSheetDescription);
+
+                // data validation
+
+                var stockCellValidation = worksheet.DataValidations.AddCustomValidation(stockCell);
+                var usedCellValidation = worksheet.DataValidations.AddCustomValidation(usedCell);
+                var damagedCellValidation = worksheet.DataValidations.AddCustomValidation(damagedCell);
+
+                stockCellValidation.ErrorStyle = usedCellValidation.ErrorStyle = damagedCellValidation.ErrorStyle = ExcelDataValidationWarningStyle.stop;
+                stockCellValidation.ErrorTitle = usedCellValidation.ErrorTitle = damagedCellValidation.ErrorTitle = "an invalid value was entered";
+                stockCellValidation.ShowErrorMessage = usedCellValidation.ShowErrorMessage = damagedCellValidation.ShowErrorMessage = true;
+                stockCellValidation.Operator = usedCellValidation.Operator = damagedCellValidation.Operator = ExcelDataValidationOperator.equal;
+
+                stockCellValidation.Error = "stock must be an integer greater than zero and must be greater than or equal to the sum of used and damaged";
+                stockCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({0}),{0}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
+
+                usedCellValidation.Error = "used must be an integer greater than zero and must be less or equal to the difference of stock and damaged";
+                usedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({1}),{1}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
+
+                damagedCellValidation.Error = "damaged must be an integer greater than zero and must be less or equal to the difference of stock and used";
+                damagedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({2}),{2}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
             }
         }
 
