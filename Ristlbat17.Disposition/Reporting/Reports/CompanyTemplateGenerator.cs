@@ -50,7 +50,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
                 // 4. For each worksheet insert grade list and according columns
                 var startServantList = _startRow;
-                InsertServantSectionColumns(worksheet, string.Equals(worksheet.Name, CumulatedSheetDescription) ? ServantSectionColumnsTotal : ServantSectionColumns);
+                InsertServantSectionColumns(worksheet);
                 InsertServantSectionRows(worksheet);
 
                 // 5. For each worksheet create the material subtitle
@@ -58,7 +58,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
                 // 6. For each worksheet insert material list and according columns
                 var startMaterialList = _startRow;
-                InsertMaterialSectionColumns(worksheet, MaterialSectionColumns, string.Equals(worksheet.Name, CumulatedSheetDescription) ? _startColumn + 1 : _startColumn);
+                InsertMaterialSectionColumns(worksheet, _startColumn);
                 InsertMaterialSectionRows(worksheet);
 
                 // 7. For each worksheet format input section, add formulas where necessary and unlock certain cells within each worksheet
@@ -101,12 +101,12 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             _startRow += spaceAfter + 1;
         }
 
-        private void InsertServantSectionColumns(ExcelWorksheet worksheet, List<string> servantSectionColumnDescriptions)
+        private void InsertServantSectionColumns(ExcelWorksheet worksheet)
         {
-            for (var i = 0; i < servantSectionColumnDescriptions.Count; i++)
+            for (var i = 0; i < ServantSectionColumns.Count; i++)
             {
                 var headerCell = ColumnIndexToColumnLetter(_startColumn + i) + _startRow;
-                worksheet.Cells[headerCell].Value = servantSectionColumnDescriptions[i];
+                worksheet.Cells[headerCell].Value = ServantSectionColumns[i];
                 worksheet.Cells[headerCell].Style.Font.Bold = true;
                 worksheet.Cells[headerCell].Style.TextRotation = 90;
                 worksheet.Cells[headerCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -133,12 +133,12 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             _startRow += 2;
         }
 
-        private void InsertMaterialSectionColumns(ExcelWorksheet worksheet, List<string> materialSectionColumnDescriptions, int startColumn)
+        private void InsertMaterialSectionColumns(ExcelWorksheet worksheet, int startColumn)
         {
-            for (var i = 0; i < materialSectionColumnDescriptions.Count; i++)
+            for (var i = 0; i < MaterialSectionColumns.Count; i++)
             {
                 var headerCell = ColumnIndexToColumnLetter(startColumn + i) + _startRow;
-                worksheet.Cells[headerCell].Value = materialSectionColumnDescriptions[i];
+                worksheet.Cells[headerCell].Value = MaterialSectionColumns[i];
                 worksheet.Cells[headerCell].Style.Font.Bold = true;
                 worksheet.Cells[headerCell].Style.TextRotation = 90;
                 worksheet.Cells[headerCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -168,21 +168,12 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private void FormatServantInputSection(ExcelWorksheet worksheet, int startRow)
         {
-            string idealCellTotalFormula, stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula;
-            idealCellTotalFormula = stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = "0";
+            string stockCellTotalFormula, usedCellTotalFormula, detachedCellTotalFormula;
+            stockCellTotalFormula = usedCellTotalFormula = detachedCellTotalFormula = "0";
             
             for (int i = 0, row = startRow + 1; i < _gradeDescriptions.Count + 1; i++, row++)
             {
                 var startColumn = _startColumn;
-
-                // ideal
-                var idealCell = ColumnIndexToColumnLetter(startColumn) + row;
-                if (string.Equals(worksheet.Name, CumulatedSheetDescription))
-                {                    
-                    worksheet.Cells[idealCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                    worksheet.Cells[idealCell].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    startColumn++;
-                }
 
                 // stock
                 var stockCell = ColumnIndexToColumnLetter(startColumn) + row;
@@ -209,21 +200,19 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // fill worksheet with name "Total" with formulas
                 if (string.Equals(worksheet.Name, CumulatedSheetDescription))
                 {
-                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
-                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
-                    worksheet.Cells[detachedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
+                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                    worksheet.Cells[detachedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 2) + row))));
                 }
 
                 // last row (sum up servant quantities per worksheet)
                 if (i == _gradeDescriptions.Count)
                 {
-                    worksheet.Cells[idealCell].Formula = string.Format("sum({0})", idealCellTotalFormula);
-                    worksheet.Cells[stockCell].Formula = string.Format("sum({0})", stockCellTotalFormula); // overwrites ideal cell formula as long as worksheet name is not "Total"
+                    worksheet.Cells[stockCell].Formula = string.Format("sum({0})", stockCellTotalFormula);
                     worksheet.Cells[usedCell].Formula = string.Format("sum({0})", usedCellTotalFormula);
                     worksheet.Cells[detachedCell].Formula = string.Format("sum({0})", detachedCellTotalFormula);
                 } else
                 {
-                    idealCellTotalFormula += "," + idealCell;
                     stockCellTotalFormula += "," + stockCell;
                     usedCellTotalFormula += "," + usedCell;
                     detachedCellTotalFormula += "," + detachedCell;
@@ -269,11 +258,6 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                     row++;
                 }
 
-                if (worksheet.Name == CumulatedSheetDescription)
-                {
-                    startColumn++;
-                }
-
                 // stock
                 var stockCell = ColumnIndexToColumnLetter(startColumn) + row;
                 worksheet.Cells[stockCell].Style.Border.BorderAround(ExcelBorderStyle.Thin);
@@ -299,9 +283,9 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // fill worksheet with name "Total" with formulas
                 if (worksheet.Name == CumulatedSheetDescription)
                 {
-                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn - 1) + row))));
-                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
-                    worksheet.Cells[damagedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                    worksheet.Cells[stockCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn) + row))));
+                    worksheet.Cells[usedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 1) + row))));
+                    worksheet.Cells[damagedCell].Formula = string.Format("if(sum({0})=0,\"\",sum({0}))", string.Join(",", _worksheets.Where(ws => !string.Equals(ws.Name, CumulatedSheetDescription)).Select(ws => string.Format("'{0}'!{1}", ws.Name, ColumnIndexToColumnLetter(startColumn + 2) + row))));
                 }
 
                 // last column (availability per material)
