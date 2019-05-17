@@ -15,7 +15,6 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         private int _startRow, _startColumn;
 
         private Company _company;
-        private List<Location> _companyLocations;
         private List<string> _gradeDescriptions;
         private List<List<ServantAllocation>> _servantDistribution;
         private List<Material.Material> _materials;
@@ -31,7 +30,6 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         public (Dictionary<string,string> errorMessages, List<List<ServantAllocation>> servantDistribution, List<List<MaterialAllocation>> materialDistribution) ExtractCompanyInventory(string companyName, ExcelPackage package)
         {
             _company = _context.Companies.Find(company => string.Equals(company.Name, companyName)).SingleOrDefault();
-            _companyLocations = _company.Locations;
 
             _gradeDescriptions = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
             _servantDistribution = new List<List<ServantAllocation>>();
@@ -72,11 +70,11 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             // 1. Check if workbook company property is equal to company name
             if (!string.Equals(package.Workbook.Properties.Company, _company.Name)) {
                 workbookValid = false;
-                errorMessages.Add("Workbook validation", "Workbook company property is not equal to current company");
+                errorMessages.Add("Workbook validation", "Workbook company property is not equal to current company (i.e. wrong template for upload selected)");
             }
 
             // 2. Check if number of worksheets corresponds with number of locations
-            if (worksheets.Count - 1 != _companyLocations.Select(_ => _.Name).Count()) // subtract total sheet
+            if (worksheets.Count - 1 != _company.Locations.Count) // subtract total sheet
             {
                 workbookValid = false;
                 errorMessages.Add("Location validation", "There is not the same number of locations within the excel file as they were found on the server");
@@ -98,28 +96,28 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 if (!ValidateServantList(worksheet))
                 {
                     workbookValid = false;
-                    errorMessages.Add($"Servant validation - {worksheet.Name}", $"Worksheet with name {worksheet.Name} does not contain a valid servant list");
+                    errorMessages.Add($"Servant list validation - {worksheet.Name}", $"Worksheet with name {worksheet.Name} does not contain a valid servant list");
                 }
 
                 // 5. Validate servant input section within each worksheet
                 if (!ValidateServantInputSection(worksheet))
                 {
                     workbookValid = false;
-                    errorMessages.Add($"Input section validation - {worksheet.Name}", $"Not all servant section inputs within worksheet {worksheet.Name} are numbers");
+                    errorMessages.Add($"Servant input section validation - {worksheet.Name}", $"Not all servant section inputs within worksheet {worksheet.Name} are positive integers");
                 }
 
                 // 6. Validate material list within each worksheet
                 if (!ValidateMaterialList(worksheet))
                 {
                     workbookValid = false;
-                    errorMessages.Add($"Material validation - {worksheet.Name}", $"Worksheet with name {worksheet.Name} does not contain a valid material list");
+                    errorMessages.Add($"Material list validation - {worksheet.Name}", $"Worksheet with name {worksheet.Name} does not contain a valid material list");
                 }
 
                 // 7. Validate material input section within each worksheet
                 if (!ValidateMaterialInputSection(worksheet))
                 {
                     workbookValid = false;
-                    errorMessages.Add($"Input section validation - {worksheet.Name}", $"Not all material section inputs within worksheet {worksheet.Name} are numbers");
+                    errorMessages.Add($"Material input section validation - {worksheet.Name}", $"Not all material section inputs within worksheet {worksheet.Name} are positive integers");
                 }
             }
 
@@ -128,7 +126,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private bool ValidateCompanyLocation(ExcelWorksheet worksheet)
         {
-            return _companyLocations.Select(_ => _.Name).Contains(worksheet.Name);
+            return _company.Locations.Select(_ => _.Name).Contains(worksheet.Name);
         }
 
         private bool ValidateServantList(ExcelWorksheet worksheet)
@@ -159,9 +157,9 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
             for (var i = 0; i < _gradeDescriptions.Count + 1; i++, _startRow++)
             {
-                if (((worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + _startRow].Value != null) && (!int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + _startRow].Value.ToString(), out _)))
-                    || ((worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + _startRow].Value != null) && (!int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + _startRow].Value.ToString(), out _)))
-                    || ((worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + _startRow].Value != null) && (!int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + _startRow].Value.ToString(), out _))))
+                if (((worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + _startRow].Value != null) && !(int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + _startRow].Value.ToString(), out _) && (int.Parse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + _startRow].Value.ToString()) >= 0)))
+                    || ((worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + _startRow].Value != null) && !(int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + _startRow].Value.ToString(), out _) && (int.Parse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + _startRow].Value.ToString()) >= 0)))
+                    || ((worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + _startRow].Value != null) && !(int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + _startRow].Value.ToString(), out _) && (int.Parse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + _startRow].Value.ToString()) >= 0))))
                 {
                     servantInputSectionValid = false;
                 }
@@ -196,7 +194,7 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private bool ValidateMaterialInputSection(ExcelWorksheet worksheet)
         {
-            var inputSectionValid = true;
+            var materialInputSectionValid = true;
             const int startColumn = 4;
 
             for (int i = 0, startRow = _startRow + 3; i < _materials.Count; i++, startRow++)
@@ -206,15 +204,15 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                     startRow++;
                 }
 
-                if (((worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + startRow].Value != null) && (!int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + startRow].Value.ToString(), out _)))
-                    || ((worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + startRow].Value != null) && (!int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + startRow].Value.ToString(), out _)))
-                    || ((worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + startRow].Value != null) && (!int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + startRow].Value.ToString(), out _))))
+                if (((worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + startRow].Value != null) && !(int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + startRow].Value.ToString(), out _) && (int.Parse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn) + startRow].Value.ToString()) >= 0)))
+                    || ((worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + startRow].Value != null) && !(int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + startRow].Value.ToString(), out _) && (int.Parse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 1) + startRow].Value.ToString()) >= 0)))
+                    || ((worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + startRow].Value != null) && !(int.TryParse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + startRow].Value.ToString(), out _) && (int.Parse(worksheet.Cells[ColumnIndexToColumnLetter(startColumn + 2) + startRow].Value.ToString()) >= 0))))
                 {
-                    inputSectionValid = false;
+                    materialInputSectionValid = false;
                 }
             }
 
-            return inputSectionValid;
+            return materialInputSectionValid;
         }
 
         private void ExtractServantInventoryData(ExcelWorksheet worksheet)
