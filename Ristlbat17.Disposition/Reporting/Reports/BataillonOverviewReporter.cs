@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using MongoDB.Driver;
@@ -30,9 +29,9 @@ namespace Ristlbat17.Disposition.Reporting.Reports
         private List<Material.Material> _materials;
         private List<MaterialReportItemBataillon> _materialReportItems;
 
-        private readonly IMaterialDispositionContext _context;
+        private readonly IDispositionContext _context;
 
-        public BataillonOverviewReporter(IMaterialDispositionContext context)
+        public BataillonOverviewReporter(IDispositionContext context)
         {
             _context = context;               
         }

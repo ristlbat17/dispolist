@@ -66,6 +66,7 @@ namespace Ristlbat17.Disposition
             services.AddTransient<IBataillonReporter, BataillonReporter>();
             services.AddTransient<BataillonOverviewReporter>();
             services.AddTransient<CompanyTemplateGenerator>();
+            services.AddTransient<CompanyInventoryGenerator>();
             SetMongoDbConventions();
 
             SetupInitialData(services.BuildServiceProvider().GetService<IMaterialDispositionContext>());

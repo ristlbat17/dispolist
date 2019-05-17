@@ -28,9 +28,10 @@ namespace Ristlbat17.Disposition.Tests
             var inventoryService = new MaterialInventoryService(_materialDispositionContext);
             var servantInventoryService = new ServantInventoryService(_servantDispositionContext);
 
-            var companyTemplateGenerator = new CompanyTemplateGenerator(dispositionContext);
+            var companyTemplateGenerator = new CompanyTemplateGenerator(_materialDispositionContext);
+            var companyInventoryGenerator = new CompanyInventoryGenerator(_materialDispositionContext);
 
-            _sut = new CompaniesController(_materialDispositionContext, inventoryService, servantInventoryService, _servantDispositionContext, companyTemplateGenerator);
+            _sut = new CompaniesController(_materialDispositionContext, inventoryService, servantInventoryService, _servantDispositionContext, companyTemplateGenerator, companyInventoryGenerator);
         }
 
         public void Dispose()

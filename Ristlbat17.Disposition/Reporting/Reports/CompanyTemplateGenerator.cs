@@ -77,6 +77,9 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // 11. Printer settings
                 ApplyPrinterSettings(worksheet, eOrientation.Portrait, 1, _startRow - 1);
             }
+
+            // 12. Set company property inside excel workbook to current company
+            package.Workbook.Properties.Company = companyName;
         }
 
         private ExcelWorksheets GenerateWorksheets(ExcelPackage package)

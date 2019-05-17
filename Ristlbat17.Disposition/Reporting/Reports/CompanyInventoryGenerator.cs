@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Driver;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OfficeOpenXml;
@@ -13,41 +14,44 @@ namespace Ristlbat17.Disposition.Reporting.Reports
 
         private int _startRow, _startColumn;
 
-        private readonly List<Location> _companyLocations;
-        private readonly List<string> _gradeDescriptions;
-        private readonly List<List<ServantAllocation>> _servantDistribution;
-        private readonly List<Material.Material> _materials;
-        private readonly List<List<MaterialAllocation>> _materialDistribution;
+        private Company _company;
+        private List<Location> _companyLocations;
+        private List<string> _gradeDescriptions;
+        private List<List<ServantAllocation>> _servantDistribution;
+        private List<Material.Material> _materials;
+        private List<List<MaterialAllocation>> _materialDistribution;
 
-        public CompanyInventoryGenerator(List<Material.Material> materials, List<Location> companyLocations)
+        private readonly IMaterialDispositionContext _context;
+
+        public CompanyInventoryGenerator(IMaterialDispositionContext context)
         {
-            // TODO @Klamir move to method and make the method static or pass dependencies such as Rempos via DI
-            _companyLocations = companyLocations;
+            _context = context;
+        }
+
+        public (Dictionary<string,string> errorMessages, List<List<ServantAllocation>> servantDistribution, List<List<MaterialAllocation>> materialDistribution) ExtractCompanyInventory(string companyName, ExcelPackage package)
+        {
+            _company = _context.Companies.Find(company => string.Equals(company.Name, companyName)).SingleOrDefault();
+            _companyLocations = _company.Locations;
 
             _gradeDescriptions = SortGradeList((Grade[])Enum.GetValues(typeof(Grade)));
             _servantDistribution = new List<List<ServantAllocation>>();
             _gradeDescriptions.ForEach(grade => _servantDistribution.Add(new List<ServantAllocation>()));
 
-            _materials = SortMaterialList(materials);
+            _materials = _context.Material.Find(_ => true).ToList();
+            _materials = SortMaterialList(_materials);
             _materialDistribution = new List<List<MaterialAllocation>>();
             _materials.ForEach(material => _materialDistribution.Add(new List<MaterialAllocation>()));
-        }
-
-        public (Dictionary<string,string> errorMessages, List<List<ServantAllocation>> servantDistribution, List<List<MaterialAllocation>> materialDistribution) ExtractCompanyInventory(ExcelPackage package)
-        {
-            // 1. Get all excel worksheets within the populated template
-            var worksheets = package.Workbook.Worksheets;
-
-            // 2. The whole workbook (i.e. all worksheets) must be valid before an import is started
-            (var workbookValid, var errorMessages) = ValidateWorkbook(worksheets);
+            
+            // 1. The whole workbook (i.e. all worksheets) must be valid before an import is started
+            (var workbookValid, var errorMessages) = ValidateWorkbook(package);
             if (!workbookValid)
             {
                 // Excel template seems not valid, i.e. an outdated material list was found within workbook, the workbook contains invalid locations resp. worksheet names or not all inputs are valid
                 return (errorMessages, new List<List<ServantAllocation>>(), new List<List<MaterialAllocation>>());
             }
 
-            // 3. If workbook is valid extract inventory data from each worksheet
-            foreach (var worksheet in worksheets.Where(worksheet => worksheet.Name != CumulatedSheetDescription))
+            // 2. If workbook is valid extract inventory data from each worksheet
+            foreach (var worksheet in package.Workbook.Worksheets.Where(worksheet => worksheet.Name != CumulatedSheetDescription))
             {
                 _startRow = 5;
                 _startColumn = 4;
@@ -59,12 +63,19 @@ namespace Ristlbat17.Disposition.Reporting.Reports
             return (errorMessages, _servantDistribution, _materialDistribution);
         }
 
-        private (bool workbookValid, Dictionary<string, string> errorMessages) ValidateWorkbook(ExcelWorksheets worksheets)
+        private (bool workbookValid, Dictionary<string, string> errorMessages) ValidateWorkbook(ExcelPackage package)
         {
+            var worksheets = package.Workbook.Worksheets;
             var workbookValid = true;
             var errorMessages = new Dictionary<string,string>();
 
-            // 1. Check if number of worksheets corresponds with number of locations
+            // 1. Check if workbook company property is equal to company name
+            if (!string.Equals(package.Workbook.Properties.Company, _company.Name)) {
+                workbookValid = false;
+                errorMessages.Add("Workbook validation", "Workbook company property is not equal to current company");
+            }
+
+            // 2. Check if number of worksheets corresponds with number of locations
             if (worksheets.Count - 1 != _companyLocations.Select(_ => _.Name).Count()) // subtract total sheet
             {
                 workbookValid = false;
@@ -76,35 +87,35 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 _startRow = 5;
                 _startColumn = 2;
 
-                // 2. Validate each company location
+                // 3. Validate each company location
                 if (!ValidateCompanyLocation(worksheet))
                 {
                     workbookValid = false;
                     errorMessages.Add($"Location validation - {worksheet.Name}", $"Location validation: location {worksheet.Name} not found on the server");
                 }
 
-                // 3. Validate servant list within each worksheet
+                // 4. Validate servant list within each worksheet
                 if (!ValidateServantList(worksheet))
                 {
                     workbookValid = false;
                     errorMessages.Add($"Servant validation - {worksheet.Name}", $"Worksheet with name {worksheet.Name} does not contain a valid servant list");
                 }
 
-                // 4. Validate servant input section within each worksheet
+                // 5. Validate servant input section within each worksheet
                 if (!ValidateServantInputSection(worksheet))
                 {
                     workbookValid = false;
                     errorMessages.Add($"Input section validation - {worksheet.Name}", $"Not all servant section inputs within worksheet {worksheet.Name} are numbers");
                 }
 
-                // 5. Validate material list within each worksheet
+                // 6. Validate material list within each worksheet
                 if (!ValidateMaterialList(worksheet))
                 {
                     workbookValid = false;
                     errorMessages.Add($"Material validation - {worksheet.Name}", $"Worksheet with name {worksheet.Name} does not contain a valid material list");
                 }
 
-                // 6. Validate material input section within each worksheet
+                // 7. Validate material input section within each worksheet
                 if (!ValidateMaterialInputSection(worksheet))
                 {
                     workbookValid = false;
