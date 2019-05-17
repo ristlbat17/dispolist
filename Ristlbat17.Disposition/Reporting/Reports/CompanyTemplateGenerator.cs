@@ -77,6 +77,9 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 // 11. Printer settings
                 ApplyPrinterSettings(worksheet, eOrientation.Portrait, 1, _startRow - 1);
             }
+
+            // 12. Set company property inside excel workbook to current company
+            package.Workbook.Properties.Company = companyName;
         }
 
         private ExcelWorksheets GenerateWorksheets(ExcelPackage package)
@@ -237,13 +240,13 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 stockCellValidation.Operator = usedCellValidation.Operator = detachedCellValidation.Operator = ExcelDataValidationOperator.equal; // seems to be a bug, you cannot use a formula as long as the operator is set to between which is default setting
 
                 stockCellValidation.Error = "stock must be an integer greater than zero and must be greater than or equal to the sum of used and detached";                
-                stockCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({0}),{0}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
+                stockCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({0}),int({0})={0},{0}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
 
                 usedCellValidation.Error = "used must be an integer greater than zero and must be less or equal to the difference of stock and detached";
-                usedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({1}),{1}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
+                usedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({1}),int({1})={1},{1}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
 
                 detachedCellValidation.Error = "detached must be an integer greater than zero and must be less or equal to the difference of stock and used";
-                detachedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({2}),{2}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
+                detachedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({2}),int({2})={2},{2}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, detachedCell);
             }
         }
 
@@ -307,13 +310,13 @@ namespace Ristlbat17.Disposition.Reporting.Reports
                 stockCellValidation.Operator = usedCellValidation.Operator = damagedCellValidation.Operator = ExcelDataValidationOperator.equal;
 
                 stockCellValidation.Error = "stock must be an integer greater than zero and must be greater than or equal to the sum of used and damaged";
-                stockCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({0}),{0}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
+                stockCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({0}),int({0})={0},{0}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
 
                 usedCellValidation.Error = "used must be an integer greater than zero and must be less or equal to the difference of stock and damaged";
-                usedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({1}),{1}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
+                usedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({1}),int({1})={1},{1}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
 
                 damagedCellValidation.Error = "damaged must be an integer greater than zero and must be less or equal to the difference of stock and used";
-                damagedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({2}),{2}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
+                damagedCellValidation.Formula.ExcelFormula = string.Format("=and(isnumber({2}),int({2})={2},{2}>=0,{0}>=sum({1},{2}))", stockCell, usedCell, damagedCell);
             }
         }
 

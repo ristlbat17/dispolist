@@ -14,11 +14,11 @@ namespace Ristlbat17.Disposition.Reporting
     [ApiController]
     public class BataillonController : ControllerBase
     {
-        private readonly IMaterialDispositionContext _context;
+        private readonly IDispositionContext _context;
         private readonly IBataillonReporter _reporter;
         private readonly BataillonOverviewReporter _bataillonOverviewReporter;
 
-        public BataillonController(IMaterialDispositionContext context, IBataillonReporter reporter, BataillonOverviewReporter bataillonOverviewReporter)
+        public BataillonController(IDispositionContext context, IBataillonReporter reporter, BataillonOverviewReporter bataillonOverviewReporter)
         {
             _context = context;
             _reporter = reporter;

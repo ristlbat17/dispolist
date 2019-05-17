@@ -24,16 +24,18 @@ namespace Ristlbat17.Disposition.Administration
         private readonly IMaterialInventoryService _materialInventoryService;
         private readonly IServantInventoryService _servantInventoryService;
         private readonly CompanyTemplateGenerator _companyTemplateGenerator;
+        private readonly CompanyInventoryGenerator _companyInventoryGenerator;
 
         public CompaniesController(IMaterialDispositionContext context,
             IMaterialInventoryService materialInventoryService, IServantInventoryService servantInventoryService, IServantDispositionContext servantDispositionContext,
-            CompanyTemplateGenerator companyTemplateGenerator)
+            CompanyTemplateGenerator companyTemplateGenerator, CompanyInventoryGenerator companyInventoryGenerator)
         {
             _context = context;
             _materialInventoryService = materialInventoryService;
             _servantInventoryService = servantInventoryService;
             _servantDispositionContext = servantDispositionContext;
             _companyTemplateGenerator = companyTemplateGenerator;
+            _companyInventoryGenerator = companyInventoryGenerator;
         }
 
         /// <summary>
@@ -206,8 +208,7 @@ namespace Ristlbat17.Disposition.Administration
                 await initialReportPerCompany.CopyToAsync(memoryStream);
                 using (var package = new ExcelPackage(memoryStream))
                 {
-                    var companyInventory = new CompanyInventoryGenerator(materials, company.Locations);
-                    var (errorMessages, servantDistribution, materialDistribution) = companyInventory.ExtractCompanyInventory(package);
+                    var (errorMessages, servantDistribution, materialDistribution) = _companyInventoryGenerator.ExtractCompanyInventory(companyName, package);
 
                     if (errorMessages.Any())
                     {
