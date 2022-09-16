@@ -27,7 +27,7 @@
     "@ng-select/ng-select": "^1.6.2",
     "@nguniversal/module-map-ngfactory-loader": "^5.0.0-beta.5",
     "aspnet-prerendering": "^3.0.1",
-    "bootstrap": "^3.3.7",
+    "bootstrap": "^3.4.1",
     "core-js": "^2.4.1",
     "izitoast": "^1.4.0",
     "ng2-izitoast": "^2.0.0",
